@@ -74,7 +74,7 @@ export const styles = StyleSheet.create({
   },
   imagePicker: {
     width: "100%",
-    height: 250,
+    height: 180,
     backgroundColor: "#e0e0e0",
     borderRadius: 12,
     justifyContent: "center",
@@ -94,9 +94,36 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     padding: 20,
   },
+  imageCountContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageCountText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#3498db",
+    marginTop: 10,
+  },
+  imageTapText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 5,
+  },
   buttonContainer: {
     marginHorizontal: 16,
     marginVertical: 16,
+  },
+  // Barra de progreso
+  progressContainer: {
+    height: 10,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 5,
+    marginTop: 8,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#3498db",
   },
   // Estilos para la lista de thumbnails
   thumbnailContainer: {
@@ -123,10 +150,6 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#ddd",
     overflow: "hidden",
-  },
-  activeImageItem: {
-    borderColor: "#3498db",
-    borderWidth: 3,
   },
   thumbnailImage: {
     width: "100%",

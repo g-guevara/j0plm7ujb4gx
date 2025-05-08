@@ -4,14 +4,14 @@ import React, { useEffect, useState } from "react";
 import { Button, FlatList, Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { styles } from "./styles/4o-scanStyles";
 import { PartialTransaction } from "./utils/imageUtils";
-import { handleApiKeySave, handlePickImages, scanTransactions } from "./utils/scanHandlers";
+import { handleApiKeySave, handlePickImages, scanAllTransactions } from "./utils/scanHandlers";
 import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggleTransaction } from "./utils/transactionHandlers";
 
 export default function ScanDebugScreen() {
   const router = useRouter();
-  const [images, setImages] = useState<string[]>([]); // Cambiado a array de strings
-  const [activeImageIndex, setActiveImageIndex] = useState<number>(-1); // Índice de la imagen seleccionada para escanear
+  const [images, setImages] = useState<string[]>([]); // Array de URIs de imágenes
   const [scanning, setScanning] = useState(false);
+  const [progress, setProgress] = useState<number>(0); // Progreso del escaneo
   const [scannedTransactions, setScannedTransactions] = useState<PartialTransaction[]>([]);
   const [apiKey, setApiKey] = useState<string>("");
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
@@ -54,35 +54,14 @@ export default function ScanDebugScreen() {
     const newImages = [...images];
     newImages.splice(index, 1);
     setImages(newImages);
-    
-    // Si eliminamos la imagen activa, resetear el índice
-    if (index === activeImageIndex) {
-      setActiveImageIndex(-1);
-    } 
-    // Si eliminamos una imagen antes de la activa, ajustar el índice
-    else if (index < activeImageIndex) {
-      setActiveImageIndex(activeImageIndex - 1);
-    }
-  };
-
-  // Seleccionar una imagen como activa
-  const selectActiveImage = (index: number) => {
-    addLog(`Seleccionando imagen en posición ${index} como activa`);
-    setActiveImageIndex(index);
   };
 
   // Renderizar cada imagen en la lista horizontal
   const renderImageItem = ({ item, index }: { item: string, index: number }) => (
     <View style={styles.imageItemContainer}>
-      <TouchableOpacity 
-        style={[
-          styles.imageItem, 
-          activeImageIndex === index ? styles.activeImageItem : {}
-        ]} 
-        onPress={() => selectActiveImage(index)}
-      >
+      <View style={styles.imageItem}>
         <Image source={{ uri: item }} style={styles.thumbnailImage} resizeMode="cover" />
-      </TouchableOpacity>
+      </View>
       <TouchableOpacity 
         style={styles.removeImageButton}
         onPress={() => removeImage(index)}
@@ -97,7 +76,7 @@ export default function ScanDebugScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Escanear Transacciones (Debug)</Text>
         <Text style={styles.subtitle}>
-          Versión de depuración con soporte para múltiples imágenes
+          Escaneo por lotes - Múltiples imágenes
         </Text>
       </View>
 
@@ -135,28 +114,35 @@ export default function ScanDebugScreen() {
             />
             <Button
               title="Guardar"
-              onPress={() => handleApiKeySave(apiKey, addLog, setShowApiKeyInput, () => 
-                scanTransactions(activeImageIndex >= 0 ? images[activeImageIndex] : null, apiKey, addLog, setScanning, setScannedTransactions, setShowApiKeyInput)
-              )}
+              onPress={() => handleApiKeySave(apiKey, addLog, setShowApiKeyInput, () => {
+                // No hacer nada después de guardar, solo cerrar el diálogo
+              })}
             />
           </View>
         </View>
       )}
 
-      {/* Container con la imagen principal y thumbnails */}
+      {/* Contenedor de imágenes y selección */}
       <View style={styles.imageSection}>
         <View style={styles.imageContainer}>
           <TouchableOpacity 
             style={styles.imagePicker} 
             onPress={() => handlePickImages(addLog, setImages, setScannedTransactions, images.length)}
+            disabled={scanning}
           >
-            {activeImageIndex >= 0 && images[activeImageIndex] ? (
-              <Image source={{ uri: images[activeImageIndex] }} style={styles.image} resizeMode="contain" />
+            {images.length > 0 ? (
+              <View style={styles.imageCountContainer}>
+                <Ionicons name="images" size={40} color="#3498db" />
+                <Text style={styles.imageCountText}>
+                  {images.length} {images.length === 1 ? "imagen seleccionada" : "imágenes seleccionadas"}
+                </Text>
+                <Text style={styles.imageTapText}>
+                  Toca para añadir más imágenes
+                </Text>
+              </View>
             ) : (
               <Text style={styles.imagePickerText}>
-                {images.length > 0 
-                  ? "Selecciona una imagen para escanear" 
-                  : "Toca para seleccionar imágenes"}
+                Toca para seleccionar imágenes (máx. 7)
               </Text>
             )}
           </TouchableOpacity>
@@ -176,7 +162,7 @@ export default function ScanDebugScreen() {
               showsHorizontalScrollIndicator={true}
               contentContainerStyle={styles.thumbnailList}
             />
-            {images.length < 7 && (
+            {images.length < 7 && !scanning && (
               <TouchableOpacity 
                 style={styles.addImageButton}
                 onPress={() => handlePickImages(addLog, setImages, setScannedTransactions, images.length)}
@@ -189,19 +175,28 @@ export default function ScanDebugScreen() {
         )}
       </View>
 
+      {/* Botón de escaneo y barra de progreso */}
       <View style={styles.buttonContainer}>
         <Button
-          title={scanning ? "Escaneando..." : "Escanear con OpenAI (DEBUG)"}
-          onPress={() => scanTransactions(
-            activeImageIndex >= 0 ? images[activeImageIndex] : null, 
+          title={scanning ? `Escaneando (${Math.round(progress)}%)` : "Escanear todas las imágenes"}
+          onPress={() => scanAllTransactions(
+            images, 
             apiKey, 
             addLog, 
             setScanning, 
-            setScannedTransactions, 
+            setScannedTransactions,
+            setProgress, 
             setShowApiKeyInput
           )}
-          disabled={activeImageIndex < 0 || scanning}
+          disabled={images.length === 0 || scanning}
+          color="#3498db"
         />
+        
+        {scanning && (
+          <View style={styles.progressContainer}>
+            <View style={[styles.progressBar, { width: `${progress}%` }]} />
+          </View>
+        )}
       </View>
 
       {/* Sección de logs de depuración */}
@@ -221,10 +216,11 @@ export default function ScanDebugScreen() {
         </ScrollView>
       </View>
 
+      {/* Resultados de las transacciones escaneadas */}
       {scannedTransactions.length > 0 && (
         <View style={styles.resultContainer}>
           <View style={styles.resultHeader}>
-            <Text style={styles.resultTitle}>Transacciones Extraídas:</Text>
+            <Text style={styles.resultTitle}>Transacciones Extraídas ({scannedTransactions.length}):</Text>
             
             <View style={styles.selectAllContainer}>
               <Text style={styles.selectAllText}>Seleccionar Todo</Text>

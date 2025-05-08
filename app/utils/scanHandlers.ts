@@ -31,11 +31,9 @@ export const handlePickImages = async (
     setImages((prev: string[]) => [...prev, ...selectedImageUris]);
     addLog("Estado de imágenes actualizado");
     
-    // Solo limpiar las transacciones escaneadas si estamos añadiendo la primera imagen
-    if (currentImagesCount === 0) {
-      setScannedTransactions([]);
-      addLog("Lista de transacciones escaneadas limpiada");
-    }
+    // Limpiar las transacciones anteriores cuando se añaden nuevas imágenes
+    setScannedTransactions([]);
+    addLog("Lista de transacciones escaneadas limpiada");
   }
 };
 
@@ -71,23 +69,81 @@ export const handleApiKeySave = async (
 };
 
 /**
- * Función para extraer transacciones de la imagen
+ * Procesa una sola imagen y extrae transacciones
  */
-export const scanTransactions = async (
-  image: string | null,
+export const processImage = async (
+  image: string,
+  apiKey: string,
+  addLog: (message: string) => void
+): Promise<PartialTransaction[]> => {
+  addLog(`Procesando imagen: ${image.substring(0, 30)}...`);
+  
+  // Convertir imagen a base64
+  const base64Image = await prepareImageBase64(image, addLog);
+  
+  // Llamar a OpenAI
+  const { responseText, status, ok } = await callOpenAI(base64Image, apiKey, addLog);
+  
+  if (!ok) {
+    addLog(`ERROR: Respuesta no exitosa (status ${status})`);
+    addLog(`Texto de error: ${responseText}`);
+    throw new Error(`Error de OpenAI (${status}): ${responseText}`);
+  }
+  
+  // Procesar la respuesta
+  let data;
+  try {
+    data = JSON.parse(responseText);
+    addLog("Respuesta parseada como JSON");
+  } catch (error: any) {
+    addLog(`ERROR al parsear respuesta como JSON: ${error.message}`);
+    throw error;
+  }
+  
+  // Verificar estructura de la respuesta
+  if (!data.choices || !data.choices.length || !data.choices[0].message) {
+    addLog("ERROR: Estructura de respuesta inválida");
+    throw new Error("Formato de respuesta inesperado de OpenAI");
+  }
+  
+  // Extraer el contenido y buscar JSON
+  const content = data.choices[0].message.content;
+  addLog(`Contenido de la respuesta: ${content.substring(0, 100)}...`);
+  
+  // Intentar extraer transacciones
+  const extractedTransactions = extractTransactionsFromResponse(content, addLog);
+  
+  // Verificar resultados
+  if (!Array.isArray(extractedTransactions) || extractedTransactions.length === 0) {
+    addLog("ERROR: No se encontraron transacciones");
+    throw new Error("No se encontraron transacciones en la respuesta");
+  }
+  
+  // Procesar transacciones
+  return processTransactions(extractedTransactions, addLog);
+};
+
+/**
+ * Función para escanear todas las imágenes secuencialmente
+ */
+export const scanAllTransactions = async (
+  images: string[],
   apiKey: string,
   addLog: (message: string) => void,
   setScanning: (scanning: boolean) => void,
   setScannedTransactions: (transactions: PartialTransaction[]) => void,
+  setProgress: (progress: number) => void,
   setShowApiKeyInput: (show: boolean) => void
 ) => {
-  addLog("======== INICIO DE ESCANEO ========");
+  addLog("======== INICIO DE ESCANEO POR LOTES ========");
   
-  if (!image) {
-    addLog("ERROR: No hay imagen seleccionada");
-    Alert.alert("Error", "Por favor selecciona una imagen para escanear");
+  if (!images || images.length === 0) {
+    addLog("ERROR: No hay imágenes seleccionadas");
+    Alert.alert("Error", "Por favor selecciona al menos una imagen");
     return;
   }
+
+  addLog(`Total de imágenes a procesar: ${images.length}`);
 
   // Verificar si tenemos API key
   if (!apiKey) {
@@ -99,67 +155,62 @@ export const scanTransactions = async (
 
   setScanning(true);
   addLog("Estado scanning establecido a true");
+  setProgress(0);
+
+  const allTransactions: PartialTransaction[] = [];
+  let successCount = 0;
+  let errorCount = 0;
 
   try {
-    addLog("-------- PREPARACIÓN DE IMAGEN --------");
-    
-    // Convertir imagen a base64
-    const base64Image = await prepareImageBase64(image, addLog);
-    
-    // Llamar a OpenAI
-    const { responseText, status, ok } = await callOpenAI(base64Image, apiKey, addLog);
-    
-    if (!ok) {
-      addLog(`ERROR: Respuesta no exitosa (status ${status})`);
-      addLog(`Texto de error: ${responseText}`);
-      throw new Error(`Error de OpenAI (${status}): ${responseText}`);
+    // Procesar cada imagen secuencialmente
+    for (let i = 0; i < images.length; i++) {
+      setProgress((i / images.length) * 100);
+      addLog(`-------- PROCESANDO IMAGEN ${i + 1}/${images.length} --------`);
+      
+      try {
+        const imageTransactions = await processImage(images[i], apiKey, addLog);
+        allTransactions.push(...imageTransactions);
+        addLog(`Extraídas ${imageTransactions.length} transacciones de la imagen ${i + 1}`);
+        successCount++;
+      } catch (error: any) {
+        addLog(`ERROR en imagen ${i + 1}: ${error.message}`);
+        errorCount++;
+        // Continuar con la siguiente imagen en caso de error
+        continue;
+      }
     }
     
-    // Procesar la respuesta
-    addLog("-------- PROCESAMIENTO DE LA RESPUESTA --------");
-    let data;
-    try {
-      data = JSON.parse(responseText);
-      addLog("Respuesta parseada como JSON");
-    } catch (error: any) {
-      addLog(`ERROR al parsear respuesta como JSON: ${error.message}`);
-      throw error;
+    // Actualizar el estado final
+    setProgress(100);
+    
+    // Verificar resultados finales
+    if (allTransactions.length === 0) {
+      throw new Error("No se pudieron extraer transacciones de ninguna imagen");
     }
     
-    // Verificar estructura de la respuesta
-    if (!data.choices || !data.choices.length || !data.choices[0].message) {
-      addLog("ERROR: Estructura de respuesta inválida");
-      throw new Error("Formato de respuesta inesperado de OpenAI");
-    }
+    addLog(`Total de transacciones extraídas: ${allTransactions.length}`);
+    setScannedTransactions(allTransactions);
     
-    // Extraer el contenido y buscar JSON
-    const content = data.choices[0].message.content;
-    addLog(`Contenido de la respuesta: ${content}`);
-    
-    // Intentar extraer transacciones
-    addLog("-------- EXTRACCIÓN DE TRANSACCIONES --------");
-    const extractedTransactions = extractTransactionsFromResponse(content, addLog);
-    
-    // Verificar resultados
-    if (!Array.isArray(extractedTransactions) || extractedTransactions.length === 0) {
-      addLog("ERROR: No se encontraron transacciones");
-      throw new Error("No se encontraron transacciones en la respuesta");
-    }
-    
-    // Procesar transacciones
-    const processedTransactions = processTransactions(extractedTransactions, addLog);
-    
-    addLog(`Transacciones procesadas: ${JSON.stringify(processedTransactions)}`);
-    setScannedTransactions(processedTransactions);
-    addLog("Estado actualizado con transacciones procesadas");
+    // Mostrar resumen de escaneo
+    Alert.alert(
+      "Escaneo Completado",
+      `Se procesaron ${successCount} de ${images.length} imágenes.\n` +
+      `Total de transacciones extraídas: ${allTransactions.length}\n` +
+      (errorCount > 0 ? `No se pudieron procesar ${errorCount} imágenes.` : "")
+    );
     
   } catch (error: any) {
     addLog(`ERROR GENERAL: ${error.message}`);
     addLog(error.stack || "No stack trace disponible");
-    Alert.alert("Error al procesar la imagen", `No se pudieron extraer datos: ${error.message}`);
+    Alert.alert(
+      "Error al procesar imágenes", 
+      `Se completaron ${successCount} de ${images.length} imágenes.\n` +
+      `Error: ${error.message}`
+    );
   } finally {
     setScanning(false);
+    setProgress(100);
     addLog("Estado scanning establecido a false");
-    addLog("======== FIN DE ESCANEO ========");
+    addLog("======== FIN DE ESCANEO POR LOTES ========");
   }
 };
