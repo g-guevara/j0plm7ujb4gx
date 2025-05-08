@@ -11,9 +11,13 @@ export type PartialTransaction = {
   selected?: boolean; // Para seleccionar/deseleccionar transacciones
 };
 
-// Función para seleccionar una imagen de la galería
-export const pickImage = async (addLog: (message: string) => void): Promise<string | null> => {
-  addLog("Iniciando selección de imagen...");
+// Función para seleccionar múltiples imágenes de la galería
+export const pickImages = async (
+  addLog: (message: string) => void, 
+  maxSelection: number = 7
+): Promise<string[] | null> => {
+  addLog("Iniciando selección de múltiples imágenes...");
+  addLog(`Número máximo de selección: ${maxSelection}`);
   
   // Solicitar permiso para acceder a la galería
   addLog("Solicitando permisos de galería...");
@@ -27,25 +31,38 @@ export const pickImage = async (addLog: (message: string) => void): Promise<stri
   }
   addLog("Permiso concedido para acceder a la galería");
 
-  addLog("Abriendo selector de imágenes...");
+  addLog("Abriendo selector de imágenes múltiples...");
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: "images",
-    allowsEditing: false, // Desactivamos edición para preservar toda la captura
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: false,
     quality: 1,
+    allowsMultipleSelection: true, // Habilitar selección múltiple
+    selectionLimit: maxSelection, // Limite de selección 
   });
-  addLog(`Resultado de selección de imagen: ${result.canceled ? 'Cancelado' : 'Imagen seleccionada'}`);
+  addLog(`Resultado de selección: ${result.canceled ? 'Cancelado' : 'Imágenes seleccionadas'}`);
 
   if (result.canceled) {
-    addLog("Selección de imagen cancelada por el usuario");
+    addLog("Selección de imágenes cancelada por el usuario");
     return null;
   }
 
-  const selectedImage = result.assets[0];
-  addLog(`Imagen seleccionada: ${selectedImage.uri}`);
-  addLog(`Tipo de archivo: ${selectedImage.mimeType || 'desconocido'}`);
-  addLog(`Dimensiones: ${selectedImage.width}x${selectedImage.height}`);
+  addLog(`Seleccionadas ${result.assets.length} imágenes`);
   
-  return selectedImage.uri;
+  // Mapear los resultados para obtener solo las URIs
+  const selectedImageUris = result.assets.map(asset => {
+    addLog(`Imagen: ${asset.uri.substring(0, 30)}...`);
+    addLog(`Tipo: ${asset.mimeType || 'desconocido'}`);
+    addLog(`Dimensiones: ${asset.width}x${asset.height}`);
+    return asset.uri;
+  });
+  
+  return selectedImageUris;
+};
+
+// Para compatibilidad con código existente, mantenemos una versión que devuelve una sola imagen
+export const pickImage = async (addLog: (message: string) => void): Promise<string | null> => {
+  const results = await pickImages(addLog, 1);
+  return results && results.length > 0 ? results[0] : null;
 };
 
 // Función para asignar categorías y procesar transacciones extraídas

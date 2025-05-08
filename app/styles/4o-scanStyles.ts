@@ -65,6 +65,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
+  imageSection: {
+    marginBottom: 16,
+  },
   imageContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -88,10 +91,69 @@ export const styles = StyleSheet.create({
   imagePickerText: {
     color: "#666",
     fontSize: 16,
+    textAlign: "center",
+    padding: 20,
   },
   buttonContainer: {
     marginHorizontal: 16,
     marginVertical: 16,
+  },
+  // Estilos para la lista de thumbnails
+  thumbnailContainer: {
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  thumbnailTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  thumbnailList: {
+    paddingVertical: 8,
+  },
+  imageItemContainer: {
+    marginRight: 10,
+    position: "relative",
+  },
+  imageItem: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#ddd",
+    overflow: "hidden",
+  },
+  activeImageItem: {
+    borderColor: "#3498db",
+    borderWidth: 3,
+  },
+  thumbnailImage: {
+    width: "100%",
+    height: "100%",
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 2,
+    zIndex: 10,
+  },
+  addImageButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    paddingVertical: 8,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+  },
+  addImageText: {
+    color: "#3498db",
+    marginLeft: 8,
+    fontWeight: "500",
   },
   logsContainer: {
     margin: 16,

@@ -1,23 +1,41 @@
 import { Alert } from "react-native";
-import { PartialTransaction, pickImage, processTransactions } from "./imageUtils";
+import { PartialTransaction, pickImages, processTransactions } from "./imageUtils";
 import { callOpenAI, extractTransactionsFromResponse, prepareImageBase64 } from "./openiaService";
 import { saveApiKey } from "./secureStorage";
 
 /**
- * Gestiona la selección de imágenes
+ * Gestiona la selección de múltiples imágenes
  */
-export const handlePickImage = async (
+export const handlePickImages = async (
   addLog: (message: string) => void,
-  setImage: (uri: string | null) => void,
-  setScannedTransactions: (transactions: PartialTransaction[]) => void
+  setImages: React.Dispatch<React.SetStateAction<string[]>>,
+  setScannedTransactions: (transactions: PartialTransaction[]) => void,
+  currentImagesCount: number
 ) => {
-  const selectedImageUri = await pickImage(addLog);
-  if (selectedImageUri) {
-    setImage(selectedImageUri);
-    addLog("Estado de imagen actualizado con nueva URI");
+  // Verificar si ya tenemos el máximo de imágenes permitidas
+  if (currentImagesCount >= 7) {
+    addLog("ERROR: Ya se ha alcanzado el límite de 7 imágenes");
+    Alert.alert("Límite alcanzado", "Solo se permiten hasta 7 imágenes");
+    return;
+  }
+
+  // Calcular cuántas imágenes más se pueden seleccionar
+  const remaining = 7 - currentImagesCount;
+  addLog(`Se pueden seleccionar ${remaining} imágenes más`);
+
+  const selectedImageUris = await pickImages(addLog, remaining);
+  if (selectedImageUris && selectedImageUris.length > 0) {
+    addLog(`Seleccionadas ${selectedImageUris.length} imágenes`);
     
-    setScannedTransactions([]);
-    addLog("Lista de transacciones escaneadas limpiada");
+    // Actualizar el estado con las nuevas imágenes
+    setImages((prev: string[]) => [...prev, ...selectedImageUris]);
+    addLog("Estado de imágenes actualizado");
+    
+    // Solo limpiar las transacciones escaneadas si estamos añadiendo la primera imagen
+    if (currentImagesCount === 0) {
+      setScannedTransactions([]);
+      addLog("Lista de transacciones escaneadas limpiada");
+    }
   }
 };
 
@@ -67,7 +85,7 @@ export const scanTransactions = async (
   
   if (!image) {
     addLog("ERROR: No hay imagen seleccionada");
-    Alert.alert("Error", "Por favor selecciona una imagen primero");
+    Alert.alert("Error", "Por favor selecciona una imagen para escanear");
     return;
   }
 
