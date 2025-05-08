@@ -1,0 +1,221 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  header: {
+    padding: 16,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
+    color: "#333",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 16,
+  },
+  apiKeyButton: {
+    alignSelf: 'center',
+    marginBottom: 16,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#e0e0e0',
+  },
+  apiKeyButtonText: {
+    color: '#3498db',
+    fontWeight: '500',
+  },
+  apiKeyContainer: {
+    backgroundColor: 'white',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  apiKeyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#333',
+  },
+  apiKeyDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  apiKeyInput: {
+    backgroundColor: '#f5f5f5',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  apiKeyButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  imageContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  imagePicker: {
+    width: "100%",
+    height: 250,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#ccc",
+    borderStyle: "dashed",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  imagePickerText: {
+    color: "#666",
+    fontSize: 16,
+  },
+  buttonContainer: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+  },
+  logsContainer: {
+    margin: 16,
+    backgroundColor: '#333',
+    borderRadius: 8,
+    padding: 10,
+  },
+  logsTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  logsScrollView: {
+    height: 200,
+    marginTop: 8,
+  },
+  logLine: {
+    color: '#ddd',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  resultContainer: {
+    margin: 16,
+  },
+  resultHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  resultTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  selectAllContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  selectAllText: {
+    marginRight: 8,
+    fontSize: 14,
+    color: "#666",
+  },
+  transactionCard: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  selectedCard: {
+    backgroundColor: "#E3F2FD",
+    borderColor: "#2196F3",
+    borderWidth: 1,
+  },
+  transactionInfo: {
+    flex: 1,
+  },
+  transactionName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  transactionDate: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 4,
+  },
+  categoryBadge: {
+    backgroundColor: "#E8F5E9",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+  },
+  categoryText: {
+    color: "#2E7D32",
+    fontWeight: "500",
+    fontSize: 12,
+  },
+  transactionAmount: {
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  expenseAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#E53935",
+    marginBottom: 4,
+  },
+  incomeAmount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#2E7D32",
+    marginBottom: 4,
+  },
+  checkboxContainer: {
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: "#999",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxSelected: {
+    backgroundColor: "#2196F3",
+    borderColor: "#2196F3",
+  },
+  checkmark: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+});
