@@ -27,9 +27,9 @@ export default function RootLayout() {
           }} 
         />
         <Stack.Screen 
-          name="scan-debug" 
+          name="4o-scan" 
           options={{ 
-            title: "Scan Debug",
+            title: "Scan",
             presentation: "modal",
           }} 
         />

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, Button, Image, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { transactionData } from "./data/sampleData";
+import { DEFAULT_API_KEY, getApiKey, saveApiKey } from "./utils/secureStorage";
 
 // Definir el tipo para una transacción parcial (con campos opcionales)
 type PartialTransaction = {
@@ -30,10 +31,29 @@ export default function ScanDebugScreen() {
     setLogs(prevLogs => [...prevLogs, `${new Date().toISOString().substring(11, 19)} - ${message}`]);
   };
 
-  // Limpiar logs al montar el componente
+  // Cargar API key al iniciar
   useEffect(() => {
+    const loadApiKey = async () => {
+      addLog("Buscando API key guardada...");
+      // Intentar cargar desde almacenamiento seguro
+      const savedApiKey = await getApiKey();
+      
+      if (savedApiKey) {
+        addLog("API key encontrada en almacenamiento seguro");
+        setApiKey(savedApiKey);
+      } else {
+        addLog("No se encontró API key guardada, usando valor por defecto");
+        // Usar la API key por defecto (para desarrollo)
+        setApiKey(DEFAULT_API_KEY);
+        // Guardar la API key por defecto en el almacenamiento seguro
+        await saveApiKey(DEFAULT_API_KEY);
+      }
+    };
+
+    // Inicializar logs y cargar API key
     setLogs([]);
     addLog("Componente montado, logs inicializados");
+    loadApiKey();
   }, []);
 
   // Función para seleccionar una imagen de la galería
@@ -79,8 +99,7 @@ export default function ScanDebugScreen() {
   };
 
   // Función para enviar una solicitud a OpenAI
-// Función para enviar una solicitud a OpenAI
-const callOpenAI = async (base64Image: string) => {
+  const callOpenAI = async (base64Image: string) => {
     addLog("-------- ENVIANDO SOLICITUD A OPENAI --------");
     addLog("URL: https://api.openai.com/v1/chat/completions");
     addLog("Método: POST");
@@ -127,6 +146,7 @@ const callOpenAI = async (base64Image: string) => {
       throw error;
     }
   };
+  
   // Función para extraer múltiples transacciones de la imagen usando la API de OpenAI
   const scanTransactions = async () => {
     addLog("======== INICIO DE ESCANEO ========");
@@ -298,7 +318,7 @@ const callOpenAI = async (base64Image: string) => {
   };
 
   // Función para manejar la configuración de la API key
-  const handleApiKeySave = () => {
+  const handleApiKeySave = async () => {
     addLog("Guardando API Key...");
     if (!apiKey || apiKey.trim().length < 20) {
       addLog("ERROR: API Key inválida");
@@ -307,6 +327,15 @@ const callOpenAI = async (base64Image: string) => {
     }
     
     addLog(`API Key válida (longitud: ${apiKey.length})`);
+    
+    // Guardar la API key en el almacenamiento seguro
+    const saved = await saveApiKey(apiKey);
+    if (saved) {
+      addLog("API Key guardada en almacenamiento seguro");
+    } else {
+      addLog("ERROR: No se pudo guardar la API Key en almacenamiento seguro");
+    }
+    
     setShowApiKeyInput(false);
     addLog("Modal API Key cerrado");
     scanTransactions(); // Continuar con el escaneo
@@ -435,7 +464,7 @@ const callOpenAI = async (base64Image: string) => {
           <Text style={styles.apiKeyTitle}>API Key de OpenAI</Text>
           <Text style={styles.apiKeyDescription}>
             Ingresa tu API Key de OpenAI para analizar imágenes.
-            La API key no se guarda en el servidor y solo se usa para esta sesión.
+            La API key se guardará de forma segura en tu dispositivo.
           </Text>
           <TextInput
             style={styles.apiKeyInput}

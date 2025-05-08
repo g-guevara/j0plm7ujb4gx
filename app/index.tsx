@@ -29,7 +29,7 @@ export default function HomeScreen() {
   
   // Navigate to debug scan screen
   const handleDebugScanPress = () => {
-    router.push("/scan-debug");
+    router.push("/4o-scan");
   };
 
   // Format currency

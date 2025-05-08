@@ -37,3 +37,6 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# API Keys and sensitive information
+app/utils/secureStorage.ts
