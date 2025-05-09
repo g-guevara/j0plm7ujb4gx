@@ -9,6 +9,13 @@ export default function RootLayout() {
         <Stack.Screen 
           name="index" 
           options={{ 
+            title: "Finance Tracker", 
+            headerShown: false, // Hide header on the index screen since it redirects
+          }} 
+        />
+        <Stack.Screen 
+          name="transactions" 
+          options={{ 
             title: "Transactions", 
             headerLargeTitle: true,
           }} 
