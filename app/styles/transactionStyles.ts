@@ -83,23 +83,31 @@ export const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: "#F8F8F8",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EEEEEE",
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF", // White background
   },
   sectionHeaderText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#555555",
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#000000",
+  },
+  dotContainer: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  dotSeparator: {
+    color: "#DDDDDD",
+    fontSize: 6,
+    letterSpacing: 1,
+    height: 10,
+    lineHeight: 10,
   },
   sectionHeaderAmount: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#555555",
+    color: "#888888",
   },
   transactionItem: {
     flexDirection: "row",
