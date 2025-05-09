@@ -90,21 +90,7 @@ export default function TransactionsScreen() {
     });
   };
   
-  // Navigate to debug scan screen
-  const handleDebugScanPress = () => {
-    // Check if a card is selected before navigating to scan
-    const selectedCard = cards.find(card => card.selected);
-    if (!selectedCard) {
-      Alert.alert("No Card Selected", "Please select a card before scanning receipts");
-      return;
-    }
-    
-    // Pass the selected card ID as a parameter
-    router.push({
-      pathname: "/screens/ScanScreen",
-      params: { cardId: selectedCard.id.toString() }
-    });
-  };
+
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -278,12 +264,7 @@ export default function TransactionsScreen() {
       </TouchableOpacity>
       
       {/* Debug Button */}
-      <TouchableOpacity 
-        style={styles.debugButton}
-        onPress={handleDebugScanPress}
-      >
-        <Ionicons name="bug" size={24} color="white" />
-      </TouchableOpacity>
+
     </View>
   );
 }
