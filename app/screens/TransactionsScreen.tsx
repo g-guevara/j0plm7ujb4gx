@@ -31,11 +31,26 @@ export default function TransactionsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const colorOptions = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c", "#34495e", "#e67e22"];
 
+  // Add "All" card option
+  const allCardsOption: Card = {
+    id: 0,
+    name: "All",
+    color: "#555555",
+    selected: true
+  };
+
   // Load all transactions (including scanned ones)
   useEffect(() => {
     // In a real implementation, we would load stored transactions here
     setTransactions(transactionData);
-    setCards(cardData);
+    
+    // Add "All" card option to the beginning of the cards array
+    const updatedCards = [allCardsOption, ...cardData.map(card => ({
+      ...card,
+      selected: false
+    }))];
+    
+    setCards(updatedCards);
   }, []);
 
   // Navigate to details screen with transaction data
@@ -56,11 +71,17 @@ export default function TransactionsScreen() {
     }));
     setCards(updatedCards);
 
-    // Filter transactions to show only those for the selected card
-    const filteredTransactions = transactionData.filter(
-      transaction => transaction.cardId === cardId
-    );
-    setTransactions(filteredTransactions);
+    // Check if "All" card (id 0) is selected
+    if (cardId === 0) {
+      // Show all transactions
+      setTransactions(transactionData);
+    } else {
+      // Filter transactions to show only those for the selected card
+      const filteredTransactions = transactionData.filter(
+        transaction => transaction.cardId === cardId
+      );
+      setTransactions(filteredTransactions);
+    }
   };
 
   // Handle creating a new card
@@ -82,6 +103,12 @@ export default function TransactionsScreen() {
     const selectedCard = cards.find(card => card.selected);
     if (!selectedCard) {
       Alert.alert("No Card Selected", "Please select a card before scanning receipts");
+      return;
+    }
+    
+    // If "All" is selected, ask the user to select a specific card
+    if (selectedCard.id === 0) {
+      Alert.alert("Select a Specific Card", "Please select a specific card before scanning receipts");
       return;
     }
     
@@ -163,9 +190,6 @@ export default function TransactionsScreen() {
 
   // Render each transaction item
   const renderTransaction = ({ item }: { item: Transaction }) => {
-    // Find card associated with this transaction
-    const card = item.cardId ? cards.find(c => c.id === item.cardId) : null;
-    
     return (
       <TouchableOpacity
         style={styles.transactionItem}
@@ -183,9 +207,7 @@ export default function TransactionsScreen() {
         
         <View style={styles.transactionDetails}>
           <Text style={styles.transactionName}>{item.name}</Text>
-          {card && (
-            <Text style={styles.transactionCategory}>{card.name}</Text>
-          )}
+          <Text style={styles.transactionCategory}>{item.category}</Text>
         </View>
         
         <Text style={styles.transactionAmount}>
