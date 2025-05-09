@@ -3,193 +3,140 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#FFFFFF",
   },
-  // Summary Card Styles
-  summaryCard: {
-    backgroundColor: "#3498db",
-    padding: 20,
-    margin: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  // Header / Title
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 5,
   },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "white",
-    marginBottom: 8,
-  },
-  summaryAmount: {
-    fontSize: 32,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: "700",
-    color: "white",
-    marginBottom: 4,
+    color: "#000000",
   },
-  summaryCount: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
-  // Cards Section Styles
+  // Cards Section
   cardsSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginVertical: 10,
+  },
+  cardsList: {
+    paddingHorizontal: 15,
+  },
+  cardItem: {
+    width: 150,
+    height: 90,
+    borderRadius: 10,
+    marginRight: 10,
+    padding: 15,
+    justifyContent: "space-between",
+  },
+  cardName: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  cardAmount: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  // Search Bar
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    marginVertical: 10,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  addButton: {
+    marginLeft: 10,
+    backgroundColor: "#000000",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  // Transactions List
+  transactionsList: {
+    paddingBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: "#F8F8F8",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEEEEE",
   },
-  sectionTitle: {
-    fontSize: 18,
+  sectionHeaderText: {
+    fontSize: 15,
     fontWeight: "600",
-    color: "#333",
+    color: "#555555",
   },
-  addButton: {
-    padding: 4,
+  sectionHeaderAmount: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#555555",
   },
-  cardsList: {
-    paddingVertical: 8,
-  },
-  cardItem: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-    borderLeftWidth: 4,
-    minWidth: 140,
-  },
-  selectedCardItem: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardContent: {
+  transactionItem: {
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F5F5",
   },
-  cardIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
+  transactionIconContainer: {
+    marginRight: 12,
   },
-  cardName: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  selectedCheckmark: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-  },
-  // Transactions Section Styles
-  transactionsSection: {
-    flex: 1,
-    marginHorizontal: 16,
-  },
-  listContent: {
-    paddingVertical: 8,
-    paddingBottom: 80, // Extra padding at bottom for floating buttons
-  },
-  transactionCard: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    position: "relative",
-    overflow: "hidden",
-  },
-  transactionCardIndicator: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  leftContent: {
-    flex: 1,
-    paddingLeft: 4,
-  },
-  rightContent: {
+  transactionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F0A500",
     justifyContent: "center",
-    alignItems: "flex-end",
+    alignItems: "center",
+  },
+  transactionDetails: {
+    flex: 1,
   },
   transactionName: {
     fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
+    fontWeight: "500",
+    color: "#333333",
+    marginBottom: 3,
   },
   transactionCategory: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
-  },
-  transactionDate: {
-    fontSize: 12,
-    color: "#888",
+    color: "#888888",
   },
   transactionAmount: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#2ecc71",
-    marginBottom: 4,
-  },
-  cardNameLabel: {
-    fontSize: 12,
-    color: "#888",
-  },
-  // Floating Action Buttons
-  scanButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#3498db",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  debugButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 90,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#e74c3c",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333333",
   },
   // Modal Styles
   modalOverlay: {
