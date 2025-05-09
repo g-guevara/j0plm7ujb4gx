@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { cardData, transactionData } from "./data/sampleData";
+import { cardData, transactionData } from "../data/sampleData";
 
 export default function DetailsScreen() {
   // Get the transactionId parameter from the URL

@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Button, FlatList, Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { cardData } from "./data/sampleData";
-import { styles } from "./styles/4o-scanStyles";
-import { PartialTransaction } from "./utils/imageUtils";
-import { handleApiKeySave, handlePickImages, scanAllTransactions } from "./utils/scanHandlers";
-import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggleTransaction } from "./utils/transactionHandlers";
+import { cardData } from "../data/sampleData";
+import { styles } from "../styles/4o-scanStyles";
+import { PartialTransaction } from "../utils/imageUtils";
+import { handleApiKeySave, handlePickImages, scanAllTransactions } from "../utils/scanHandlers";
+import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggleTransaction } from "../utils/transactionHandlers";
 
-export default function ScanDebugScreen() {
+export default function ScanScreen() {
   const router = useRouter();
   const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const [images, setImages] = useState<string[]>([]); // Array de URIs de imágenes
@@ -302,4 +302,4 @@ export default function ScanDebugScreen() {
 }
 
 // Import for useEffect to work
-import { DEFAULT_API_KEY, getApiKey, saveApiKey } from "./utils/secureStorage";
+import { DEFAULT_API_KEY, getApiKey, saveApiKey } from "../utils/secureStorage";

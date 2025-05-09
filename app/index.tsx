@@ -12,7 +12,7 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <ActivityIndicator size="large" color="#3498db" />
       <Text style={styles.loadingText}>Loading FinanceTracker...</Text>
-      <Redirect href="/transactions" />
+      <Redirect href="/screens/TransactionsScreen" />
     </View>
   );
 }

@@ -2,23 +2,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Modal,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import {
-    addCard,
-    Card,
-    cardData,
-    selectCard,
-    Transaction,
-    transactionData
-} from "./data/sampleData";
-import { styles } from "./styles/transactionStyles";
+  addCard,
+  Card,
+  cardData,
+  selectCard,
+  Transaction,
+  transactionData
+} from "../data/sampleData";
+import { styles } from "../styles/transactionStyles";
 
 export default function TransactionsScreen() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function TransactionsScreen() {
   // Navigate to details screen with transaction data
   const handleTransactionPress = (transaction: Transaction) => {
     router.push({
-      pathname: "/details",
+      pathname: "/screens/DetailsScreen",
       params: { transactionId: transaction.id.toString() }
     });
   };
@@ -85,7 +85,7 @@ export default function TransactionsScreen() {
     
     // Pass the selected card ID as a parameter
     router.push({
-      pathname: "/scan",
+      pathname: "/screens/ScanScreen",
       params: { cardId: selectedCard.id.toString() }
     });
   };
@@ -101,7 +101,7 @@ export default function TransactionsScreen() {
     
     // Pass the selected card ID as a parameter
     router.push({
-      pathname: "/4o-scan",
+      pathname: "/screens/ScanScreen",
       params: { cardId: selectedCard.id.toString() }
     });
   };
