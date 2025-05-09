@@ -20,6 +20,17 @@ export const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 16,
   },
+  cardIndicator: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  cardName: {
+    color: 'white',
+    fontWeight: '600',
+  },
   apiKeyButton: {
     alignSelf: 'center',
     marginBottom: 16,
@@ -254,12 +265,18 @@ export const styles = StyleSheet.create({
     color: "#888",
     marginBottom: 4,
   },
+  cardNameText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4,
+  },
   categoryBadge: {
     backgroundColor: "#E8F5E9",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: "flex-start",
+    marginBottom: 4,
   },
   categoryText: {
     color: "#2E7D32",

@@ -1,8 +1,8 @@
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Button, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { transactionData } from "./data/sampleData";
+import { cardData, transactionData } from "./data/sampleData";
 
 // Definir el tipo para una transacción parcial (con campos opcionales)
 type PartialTransaction = {
@@ -10,13 +10,18 @@ type PartialTransaction = {
   category?: string;
   name?: string;
   mount?: number;
+  cardId?: number;
 };
 
 export default function ScanScreen() {
   const router = useRouter();
+  const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const [image, setImage] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<PartialTransaction | null>(null);
+
+  // Find the selected card
+  const selectedCard = cardData.find(card => card.id === parseInt(cardId as string));
 
   // Función para seleccionar una imagen de la galería
   const pickImage = async () => {
@@ -68,7 +73,8 @@ export default function ScanScreen() {
         date: fechaActual,
         category: "Compras",
         name: "Factura escaneada",
-        mount: Math.floor(Math.random() * 10000) / 100  // Un valor aleatorio para demostración
+        mount: Math.floor(Math.random() * 10000) / 100,  // Un valor aleatorio para demostración
+        cardId: parseInt(cardId as string) // Add the cardId from the route params
       };
       
       console.log("Datos extraídos:", extractedData);
@@ -104,7 +110,8 @@ export default function ScanScreen() {
       date: scannedData.date || new Date().toISOString().split('T')[0],
       category: scannedData.category || "Otros",
       name: scannedData.name || "Transacción sin nombre",
-      mount: scannedData.mount || 0
+      mount: scannedData.mount || 0,
+      cardId: scannedData.cardId // Include the cardId
     };
 
     try {
@@ -114,7 +121,7 @@ export default function ScanScreen() {
       if (success) {
         Alert.alert(
           "Transacción Guardada",
-          `ID: ${newTransaction.id}\nFecha: ${newTransaction.date}\nCategoría: ${newTransaction.category}\nNombre: ${newTransaction.name}\nMonto: ${newTransaction.mount.toFixed(2)}`,
+          `ID: ${newTransaction.id}\nFecha: ${newTransaction.date}\nCategoría: ${newTransaction.category}\nNombre: ${newTransaction.name}\nMonto: ${newTransaction.mount.toFixed(2)}\nTarjeta: ${selectedCard?.name || 'Sin tarjeta'}`,
           [
             {
               text: "OK",
@@ -141,6 +148,11 @@ export default function ScanScreen() {
         <Text style={styles.subtitle}>
           Selecciona una foto de un recibo o factura para extraer la información
         </Text>
+        {selectedCard && (
+          <View style={[styles.cardIndicator, { backgroundColor: selectedCard.color }]}>
+            <Text style={styles.cardName}>{selectedCard.name}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.imageContainer}>
@@ -196,6 +208,18 @@ export default function ScanScreen() {
                 <Text style={styles.dataValue}>${scannedData.mount.toFixed(2)}</Text>
               </View>
             )}
+
+            {selectedCard && (
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Tarjeta:</Text>
+                <View style={[styles.cardValue, { backgroundColor: selectedCard.color + '20' }]}>
+                  <View style={[styles.cardDot, { backgroundColor: selectedCard.color }]} />
+                  <Text style={[styles.cardValueText, { color: selectedCard.color }]}>
+                    {selectedCard.name}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
 
           <View style={styles.buttonContainer}>
@@ -229,6 +253,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginBottom: 16,
+  },
+  cardIndicator: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  cardName: {
+    color: 'white',
+    fontWeight: '600',
   },
   imageContainer: {
     marginHorizontal: 16,
@@ -293,5 +328,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+  cardValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  cardDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  cardValueText: {
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Button, FlatList, Image, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { cardData } from "./data/sampleData";
 import { styles } from "./styles/4o-scanStyles";
 import { PartialTransaction } from "./utils/imageUtils";
 import { handleApiKeySave, handlePickImages, scanAllTransactions } from "./utils/scanHandlers";
@@ -9,6 +10,7 @@ import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggle
 
 export default function ScanDebugScreen() {
   const router = useRouter();
+  const { cardId } = useLocalSearchParams<{ cardId: string }>();
   const [images, setImages] = useState<string[]>([]); // Array de URIs de imágenes
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState<number>(0); // Progreso del escaneo
@@ -16,6 +18,9 @@ export default function ScanDebugScreen() {
   const [apiKey, setApiKey] = useState<string>("");
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+
+  // Find the selected card
+  const selectedCard = cardData.find(card => card.id === parseInt(cardId as string));
 
   // Función para añadir logs
   const addLog = (message: string) => {
@@ -45,6 +50,11 @@ export default function ScanDebugScreen() {
     // Inicializar logs y cargar API key
     setLogs([]);
     addLog("Componente montado, logs inicializados");
+    if (selectedCard) {
+      addLog(`Tarjeta seleccionada: ${selectedCard.name} (ID: ${selectedCard.id})`);
+    } else {
+      addLog("ADVERTENCIA: No hay tarjeta seleccionada");
+    }
     loadApiKey();
   }, []);
 
@@ -78,6 +88,11 @@ export default function ScanDebugScreen() {
         <Text style={styles.subtitle}>
           Escaneo por lotes - Múltiples imágenes
         </Text>
+        {selectedCard && (
+          <View style={[styles.cardIndicator, { backgroundColor: selectedCard.color }]}>
+            <Text style={styles.cardName}>{selectedCard.name}</Text>
+          </View>
+        )}
       </View>
 
       {/* Botón para configurar API Key */}
@@ -186,7 +201,8 @@ export default function ScanDebugScreen() {
             setScanning, 
             setScannedTransactions,
             setProgress, 
-            setShowApiKeyInput
+            setShowApiKeyInput,
+            parseInt(cardId as string) // Pass the cardId to associate with scanned transactions
           )}
           disabled={images.length === 0 || scanning}
           color="#3498db"
@@ -248,6 +264,11 @@ export default function ScanDebugScreen() {
                     <Text style={styles.categoryText}>{transaction.category}</Text>
                   </View>
                 )}
+                {selectedCard && (
+                  <Text style={styles.cardNameText}>
+                    <Ionicons name="card-outline" size={12} color="#666" /> {selectedCard.name}
+                  </Text>
+                )}
               </View>
               <View style={styles.transactionAmount}>
                 <Text style={getAmountStyle(transaction.mount, styles)}>
@@ -270,7 +291,7 @@ export default function ScanDebugScreen() {
           <View style={styles.buttonContainer}>
             <Button
               title="Guardar Transacciones"
-              onPress={() => saveTransactions(scannedTransactions, addLog, router)}
+              onPress={() => saveTransactions(scannedTransactions, addLog, router, parseInt(cardId as string))}
               disabled={!scannedTransactions.some(t => t.selected)}
             />
           </View>

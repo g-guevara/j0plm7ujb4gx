@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { transactionData } from "./data/sampleData";
+import { cardData, transactionData } from "./data/sampleData";
 
 export default function DetailsScreen() {
   // Get the transactionId parameter from the URL
@@ -34,12 +34,20 @@ export default function DetailsScreen() {
     );
   }
 
+  // Find the card associated with this transaction
+  const card = transaction.cardId ? cardData.find(c => c.id === transaction.cardId) : null;
+
   return (
     <ScrollView style={styles.container}>
       {/* Transaction Amount Card */}
-      <View style={styles.amountCard}>
+      <View style={[styles.amountCard, card ? {backgroundColor: card.color} : {}]}>
         <Text style={styles.amountLabel}>Amount</Text>
         <Text style={styles.amountValue}>{formatCurrency(transaction.mount)}</Text>
+        {card && (
+          <View style={styles.cardBadge}>
+            <Text style={styles.cardBadgeText}>{card.name}</Text>
+          </View>
+        )}
       </View>
 
       {/* Transaction Details */}
@@ -73,6 +81,19 @@ export default function DetailsScreen() {
             <Text style={styles.detailLabel}>Transaction ID</Text>
             <Text style={styles.detailValue}>{transaction.id}</Text>
           </View>
+
+          {card && (
+            <>
+              <View style={styles.separator} />
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Card</Text>
+                <View style={[styles.cardChip, { backgroundColor: card.color + '20', borderColor: card.color }]}>
+                  <View style={[styles.cardDot, { backgroundColor: card.color }]} />
+                  <Text style={[styles.cardChipText, { color: card.color }]}>{card.name}</Text>
+                </View>
+              </View>
+            </>
+          )}
         </View>
       </View>
 
@@ -82,17 +103,28 @@ export default function DetailsScreen() {
         {transactionData
           .filter(t => t.category === transaction.category && t.id !== transaction.id)
           .slice(0, 3)
-          .map(similarTransaction => (
-            <View key={similarTransaction.id} style={styles.similarCard}>
-              <View>
-                <Text style={styles.similarName}>{similarTransaction.name}</Text>
-                <Text style={styles.similarDate}>{similarTransaction.date}</Text>
+          .map(similarTransaction => {
+            // Find card for similar transaction
+            const similarCard = similarTransaction.cardId ? 
+              cardData.find(c => c.id === similarTransaction.cardId) : null;
+              
+            return (
+              <View key={similarTransaction.id} style={styles.similarCard}>
+                <View>
+                  <Text style={styles.similarName}>{similarTransaction.name}</Text>
+                  <Text style={styles.similarDate}>{similarTransaction.date}</Text>
+                  {similarCard && (
+                    <Text style={[styles.similarCard, { color: similarCard.color }]}>
+                      {similarCard.name}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.similarAmount}>
+                  {formatCurrency(similarTransaction.mount)}
+                </Text>
               </View>
-              <Text style={styles.similarAmount}>
-                {formatCurrency(similarTransaction.mount)}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
       </View>
 
       {/* Raw JSON Section */}
@@ -135,6 +167,18 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "700",
     color: "white",
+  },
+  cardBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginTop: 12,
+  },
+  cardBadgeText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 14,
   },
   section: {
     marginVertical: 8,
@@ -186,6 +230,24 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
     fontWeight: "600",
     fontSize: 14,
+  },
+  cardChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  cardChipText: {
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  cardDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
   },
   similarCard: {
     backgroundColor: "white",

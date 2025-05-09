@@ -8,6 +8,7 @@ export type PartialTransaction = {
   category?: string;
   name?: string;
   mount?: number;
+  cardId?: number; // Added cardId property
   selected?: boolean; // Para seleccionar/deseleccionar transacciones
 };
 
@@ -80,7 +81,8 @@ export const processTransactions = (
       selected: true,
       date: transaction.date || new Date().toISOString().split('T')[0],
       name: transaction.name || "Transacción sin nombre",
-      mount: transaction.mount !== undefined ? transaction.mount : 0
+      mount: transaction.mount !== undefined ? transaction.mount : 0,
+      cardId: transaction.cardId // Preserve cardId if it exists
     };
     
     // Añadir categoría si no existe

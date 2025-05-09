@@ -74,7 +74,8 @@ export const handleApiKeySave = async (
 export const processImage = async (
   image: string,
   apiKey: string,
-  addLog: (message: string) => void
+  addLog: (message: string) => void,
+  cardId?: number
 ): Promise<PartialTransaction[]> => {
   addLog(`Procesando imagen: ${image.substring(0, 30)}...`);
   
@@ -119,8 +120,14 @@ export const processImage = async (
     throw new Error("No se encontraron transacciones en la respuesta");
   }
   
+  // Add cardId to all transactions
+  const transactionsWithCardId = extractedTransactions.map(transaction => ({
+    ...transaction,
+    cardId: cardId
+  }));
+  
   // Procesar transacciones
-  return processTransactions(extractedTransactions, addLog);
+  return processTransactions(transactionsWithCardId, addLog);
 };
 
 /**
@@ -133,7 +140,8 @@ export const scanAllTransactions = async (
   setScanning: (scanning: boolean) => void,
   setScannedTransactions: (transactions: PartialTransaction[]) => void,
   setProgress: (progress: number) => void,
-  setShowApiKeyInput: (show: boolean) => void
+  setShowApiKeyInput: (show: boolean) => void,
+  cardId?: number
 ) => {
   addLog("======== INICIO DE ESCANEO POR LOTES ========");
   
@@ -153,6 +161,13 @@ export const scanAllTransactions = async (
   }
   addLog(`API Key disponible (longitud: ${apiKey.length})`);
 
+  // Log card information
+  if (cardId) {
+    addLog(`Tarjeta seleccionada para transacciones: ID ${cardId}`);
+  } else {
+    addLog("ADVERTENCIA: No hay tarjeta seleccionada para las transacciones");
+  }
+
   setScanning(true);
   addLog("Estado scanning establecido a true");
   setProgress(0);
@@ -168,7 +183,7 @@ export const scanAllTransactions = async (
       addLog(`-------- PROCESANDO IMAGEN ${i + 1}/${images.length} --------`);
       
       try {
-        const imageTransactions = await processImage(images[i], apiKey, addLog);
+        const imageTransactions = await processImage(images[i], apiKey, addLog, cardId);
         allTransactions.push(...imageTransactions);
         addLog(`Extraídas ${imageTransactions.length} transacciones de la imagen ${i + 1}`);
         successCount++;

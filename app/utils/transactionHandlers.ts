@@ -46,7 +46,8 @@ export const toggleTransaction = (
 export const saveTransactions = async (
   scannedTransactions: PartialTransaction[],
   addLog: (message: string) => void,
-  router: Router
+  router: Router,
+  cardId?: number
 ) => {
   const selectedTransactions = scannedTransactions.filter(t => t.selected);
   addLog(`Guardando ${selectedTransactions.length} transacciones seleccionadas`);
@@ -71,7 +72,8 @@ export const saveTransactions = async (
         date: transaction.date || new Date().toISOString().split('T')[0],
         category: transaction.category || "Otros",
         name: transaction.name || "Transacción sin nombre",
-        mount: transaction.mount || 0
+        mount: transaction.mount || 0,
+        cardId: transaction.cardId || cardId // Use transaction's cardId if available, otherwise use the provided cardId
       };
 
       // En una app real, aquí guardaríamos la transacción
