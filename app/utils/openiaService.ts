@@ -7,7 +7,7 @@ export const callOpenAI = async (base64Image: string, apiKey: string, addLog: (m
   addLog("Método: POST");
   
   // Preparar los datos para la API de OpenAI con un prompt más simple y directo
-  const prompt = "Observa esta captura de pantalla de movimientos bancarios y extrae todas las transacciones. Para cada transacción, dame fecha, nombre y monto. Devuelve un array JSON con este formato exacto: [{\"date\":\"YYYY-MM-DD\",\"name\":\"Nombre de transacción\",\"mount\":NUMERO}]. El monto debe ser un número sin símbolos. Si es un gasto, el número es positivo. Si es un ingreso, el número es negativo. IMPORTANTE: devuelve SOLO el array JSON sin texto adicional.";
+  const prompt = "Observa esta foto y extrae todas las transacciones. Para cada transacción, dame fecha, nombre y monto. Devuelve un array JSON con este formato exacto: [{\"date\":\"YYYY-MM-DD\",\"name\":\"Nombre de transacción\",\"mount\":NUMERO}]. El monto debe ser un número sin símbolos. Si es un gasto, el número es positivo. Si es un ingreso, el número es negativo. IMPORTANTE: devuelve SOLO el array JSON sin texto adicional.";
   addLog(`Prompt: ${prompt}`);
   
   // Usar el modelo gpt-4o en lugar de gpt-4-vision-preview que está descontinuado
@@ -40,7 +40,7 @@ export const callOpenAI = async (base64Image: string, apiKey: string, addLog: (m
     
     addLog(`Respuesta recibida. Status: ${response.status}`);
     const responseText = await response.text();
-    addLog(`Respuesta (primeros 100 caracteres): ${responseText.substring(0, 100)}...`);
+    addLog(`Respuesta (primeros 500 caracteres): ${responseText.substring(0, 1000)}...`);
     
     return { responseText, status: response.status, ok: response.ok };
   } catch (error: any) {
