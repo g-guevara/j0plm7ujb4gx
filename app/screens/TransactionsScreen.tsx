@@ -31,22 +31,21 @@ import {
 
 import { styles as transactionStyles } from "../styles/transactionStyles";
 
-// Create local styles for the background elements
+// Create our own styles that won't conflict with transactionStyles
 const localStyles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  backgroundImage: {
+  background: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '40%', // Only cover the top 40% of the screen
+    height: '40%',
     width: '100%',
-    zIndex: 0,
-    // Add a fallback background color in case image fails to load
-    backgroundColor: '#4287f5', 
+    zIndex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    backgroundColor: 'transparent', // Make container transparent instead of white
+    zIndex: 2,
   }
 });
 
@@ -219,20 +218,18 @@ export default function TransactionsScreen() {
   );
 
   return (
-    <View style={localStyles.mainContainer}>
-      {/* Background Image - only at the top */}
-      <View style={localStyles.backgroundImage}>
-        {/* Trying different image paths */}
-        <Image
-          source={require('../../assets/images/icon.png')} 
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
-      </View>
+    <View style={{ flex: 1 }}>
+      {/* Background image - using dashboard-bg.png now */}
+      <Image
+        source={require('../../assets/images/dashboard-bg.png')}
+        style={localStyles.background}
+        resizeMode="cover"
+      />
       
-      <StatusBar barStyle="dark-content" />
-      
-      <View style={transactionStyles.container}>
+      {/* The rest of the UI with transparent container */}
+      <View style={localStyles.contentContainer}>
+        <StatusBar barStyle="dark-content" />
+        
         {/* Header / Title */}
         <View style={transactionStyles.headerContainer}>
           <Text style={transactionStyles.headerTitle}>Wallet</Text>
@@ -325,4 +322,5 @@ export default function TransactionsScreen() {
         </Modal>
       </View>
     </View>
-  );}
+  );
+}
