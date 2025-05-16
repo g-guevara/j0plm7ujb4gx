@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
-  ImageBackground,
+  Image,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -242,15 +242,18 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.mainContainer}>
-      {/* Background Image */}
-      <ImageBackground
+      {/* Background Image - only at the top */}
+      <Image
         source={require('../../assets/images/dashboard-bg.png')}
         style={styles.backgroundImage}
         resizeMode="cover"
-      >
-        <StatusBar barStyle="dark-content" />
-        
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      />
+      
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
@@ -330,8 +333,7 @@ export default function DashboardScreen() {
           </View>
         ))}
       </View>
-    </ScrollView>
-      </ImageBackground>
+      </ScrollView>
     </View>
   );
 }
@@ -379,13 +381,19 @@ const getCategoryIcon = (category: string) => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   backgroundImage: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%', // Only cover the top 50% of the screen
     width: '100%',
   },
   container: {
     flex: 1,
+    zIndex: 1,
   },
   contentContainer: {
     paddingBottom: 20,
