@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#000000",
+    color: "#000",
   },
   // Cards Section
   cardsSection: {
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 10,
     height: 40,
@@ -83,6 +83,7 @@ export const styles = StyleSheet.create({
   // Transactions List
   transactionsList: {
     paddingBottom: 20,
+        backgroundColor: "#FFFFFF", // White background
   },
   sectionHeader: {
     flexDirection: "row",
