@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   dotSeparator: {
-    color: "#DDDDDD",
+    color: "#fff",
     fontSize: 6,
     letterSpacing: 1,
     height: 10,
