@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop:95, // Increased padding for both platforms
     paddingBottom: 10,
   },
   headerTitle: {
