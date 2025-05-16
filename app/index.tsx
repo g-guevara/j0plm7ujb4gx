@@ -1,32 +1,47 @@
-import { Redirect } from "expo-router";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import {
+  ActivityIndicator,
+  SafeAreaView,
+  StyleSheet,
+  View
+} from "react-native";
+import TabNavigator from "./navigation/TabNavigator";
 
-export default function IndexScreen() {
-  // This screen simply redirects to the transactions screen
-  // You could add some initialization logic here if needed
-  
-  // Example: You might want to check if the user is logged in
-  // or load some initial data before redirecting
-  
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#3498db" />
-      <Text style={styles.loadingText}>Loading FinanceTracker...</Text>
-      <Redirect href="/screens/TransactionsScreen" />
-    </View>
-  );
+export default function Index() {
+  // En una aplicación real podrías tener un estado de carga inicial
+  // Por ahora, mostraremos directamente el TabNavigator
+  const isLoading = false;
+
+  // Si estamos cargando, mostramos un indicador de actividad
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3498db" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Si no estamos cargando, mostramos directamente el TabNavigator
+  return <TabNavigator />;
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#FFFFFF"
   },
-  loadingText: {
-    marginTop: 20,
-    fontSize: 18,
-    color: "#333",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
+  keyboardView: {
+    flex: 1
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center'
+  }
 });
