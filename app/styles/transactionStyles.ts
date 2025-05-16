@@ -5,6 +5,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+
   // Header / Title
   headerContainer: {
     paddingHorizontal: 20,

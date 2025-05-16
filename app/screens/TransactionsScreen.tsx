@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
+  Image,
   Modal,
   SectionList,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -26,7 +29,26 @@ import {
   renderTransactionIcon
 } from "../components/transactions/transactionHelpers";
 
-import { styles } from "../styles/transactionStyles";
+import { styles as transactionStyles } from "../styles/transactionStyles";
+
+// Create local styles for the background elements
+const localStyles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%', // Only cover the top 40% of the screen
+    width: '100%',
+    zIndex: 0,
+    // Add a fallback background color in case image fails to load
+    backgroundColor: '#4287f5', 
+  }
+});
 
 export default function TransactionsScreen() {
   const router = useRouter();
@@ -133,15 +155,15 @@ export default function TransactionsScreen() {
     return (
       <TouchableOpacity
         style={[
-          styles.cardItem, 
+          transactionStyles.cardItem, 
           { backgroundColor: isSelected ? item.color : '#e0e0e0' },
         ]}
         onPress={() => handleCardSelect(item.id)}
       >
-        <Text style={styles.cardName}>{item.name}</Text>
+        <Text style={transactionStyles.cardName}>{item.name}</Text>
         
         {isSelected && (
-          <Text style={styles.cardAmount}>$23,00</Text>
+          <Text style={transactionStyles.cardAmount}>$23,00</Text>
         )}
       </TouchableOpacity>
     );
@@ -151,19 +173,19 @@ export default function TransactionsScreen() {
   const renderTransaction = ({ item }: { item: Transaction }) => {
     return (
       <TouchableOpacity
-        style={styles.transactionItem}
+        style={transactionStyles.transactionItem}
         onPress={() => handleTransactionPress(item)}
       >
-        <View style={styles.transactionIconContainer}>
+        <View style={transactionStyles.transactionIconContainer}>
           {renderTransactionIcon(item.category)}
         </View>
         
-        <View style={styles.transactionDetails}>
-          <Text style={styles.transactionName}>{item.name}</Text>
-          <Text style={styles.transactionCategory}>{item.category}</Text>
+        <View style={transactionStyles.transactionDetails}>
+          <Text style={transactionStyles.transactionName}>{item.name}</Text>
+          <Text style={transactionStyles.transactionCategory}>{item.category}</Text>
         </View>
         
-        <Text style={styles.transactionAmount}>
+        <Text style={transactionStyles.transactionAmount}>
           {formatCurrency(item.mount)}
         </Text>
       </TouchableOpacity>
@@ -171,124 +193,136 @@ export default function TransactionsScreen() {
   };
 
   // Render section header (date and total)
-// Render section header (date and total)
-const renderSectionHeader = ({ section }: { section: { title: string; total: number } }) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionHeaderText}>{section.title}</Text>
-    <View style={styles.dotContainer}>
-      <Text style={styles.dotSeparator}>{"............................................"}</Text>
+  const renderSectionHeader = ({ section }: { section: { title: string; total: number } }) => (
+    <View style={transactionStyles.sectionHeader}>
+      <Text style={transactionStyles.sectionHeaderText}>{section.title}</Text>
+      <View style={transactionStyles.dotContainer}>
+        <Text style={transactionStyles.dotSeparator}>{"............................................"}</Text>
+      </View>
+      <Text style={transactionStyles.sectionHeaderAmount}>
+        {section.total < 0 ? `-US${Math.abs(section.total).toFixed(0)}` : `-US${section.total.toFixed(0)}`}
+      </Text>
     </View>
-    <Text style={styles.sectionHeaderAmount}>
-      {section.total < 0 ? `-US$${Math.abs(section.total).toFixed(0)}` : `-US$${section.total.toFixed(0)}`}
-    </Text>
-  </View>
-);
+  );
 
   // Render color option for card creation
   const renderColorOption = (color: string) => (
     <TouchableOpacity
       key={color}
       style={[
-        styles.colorOption,
+        transactionStyles.colorOption,
         { backgroundColor: color },
-        newCardColor === color && styles.selectedColorOption
+        newCardColor === color && transactionStyles.selectedColorOption
       ]}
       onPress={() => setNewCardColor(color)}
     />
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header / Title */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Wallet</Text>
-      </View>
-
-      {/* Cards Section */}
-      <View style={styles.cardsSection}>
-        <FlatList
-          data={cards}
-          renderItem={renderCard}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.cardsList}
+    <View style={localStyles.mainContainer}>
+      {/* Background Image - only at the top */}
+      <View style={localStyles.backgroundImage}>
+        {/* Trying different image paths */}
+        <Image
+          source={require('../../assets/images/icon.png')} 
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
         />
       </View>
       
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+      <StatusBar barStyle="dark-content" />
+      
+      <View style={transactionStyles.container}>
+        {/* Header / Title */}
+        <View style={transactionStyles.headerContainer}>
+          <Text style={transactionStyles.headerTitle}>Wallet</Text>
+        </View>
+
+        {/* Cards Section */}
+        <View style={transactionStyles.cardsSection}>
+          <FlatList
+            data={cards}
+            renderItem={renderCard}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={transactionStyles.cardsList}
           />
         </View>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={handleScanPress}
-        >
-          <Text style={styles.addButtonText}>+ Add file</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Transactions List */}
-      <SectionList
-        sections={groupTransactionsByDate(transactions)}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderTransaction}
-        renderSectionHeader={renderSectionHeader}
-        stickySectionHeadersEnabled={true}
-        contentContainerStyle={styles.transactionsList}
-      />
-
-      {/* Add Card Modal */}
-      <Modal
-        visible={showAddCardModal}
-        transparent={true}
-        animationType="slide"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Card</Text>
-            
+        
+        {/* Search Bar */}
+        <View style={transactionStyles.searchContainer}>
+          <View style={transactionStyles.searchBar}>
+            <Ionicons name="search" size={20} color="#999" style={transactionStyles.searchIcon} />
             <TextInput
-              style={styles.textInput}
-              placeholder="Card Name"
-              value={newCardName}
-              onChangeText={setNewCardName}
-              maxLength={20}
+              style={transactionStyles.searchInput}
+              placeholder="Search"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
             />
-            
-            <Text style={styles.colorSelectorLabel}>Select Card Color</Text>
-            <View style={styles.colorSelector}>
-              {colorOptions.map(renderColorOption)}
-            </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => {
-                  setShowAddCardModal(false);
-                  setNewCardName("");
-                }}
-              >
-                <Text style={styles.buttonText}>Cancel</Text>
-              </TouchableOpacity>
+          </View>
+          <TouchableOpacity 
+            style={transactionStyles.addButton}
+            onPress={handleScanPress}
+          >
+            <Text style={transactionStyles.addButtonText}>+ Add file</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Transactions List */}
+        <SectionList
+          sections={groupTransactionsByDate(transactions)}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderTransaction}
+          renderSectionHeader={renderSectionHeader}
+          stickySectionHeadersEnabled={true}
+          contentContainerStyle={transactionStyles.transactionsList}
+        />
+
+        {/* Add Card Modal */}
+        <Modal
+          visible={showAddCardModal}
+          transparent={true}
+          animationType="slide"
+        >
+          <View style={transactionStyles.modalOverlay}>
+            <View style={transactionStyles.modalContent}>
+              <Text style={transactionStyles.modalTitle}>Add New Card</Text>
               
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.saveButton]}
-                onPress={handleAddCard}
-              >
-                <Text style={styles.buttonText}>Save</Text>
-              </TouchableOpacity>
+              <TextInput
+                style={transactionStyles.textInput}
+                placeholder="Card Name"
+                value={newCardName}
+                onChangeText={setNewCardName}
+                maxLength={20}
+              />
+              
+              <Text style={transactionStyles.colorSelectorLabel}>Select Card Color</Text>
+              <View style={transactionStyles.colorSelector}>
+                {colorOptions.map(renderColorOption)}
+              </View>
+              
+              <View style={transactionStyles.modalButtons}>
+                <TouchableOpacity 
+                  style={[transactionStyles.modalButton, transactionStyles.cancelButton]}
+                  onPress={() => {
+                    setShowAddCardModal(false);
+                    setNewCardName("");
+                  }}
+                >
+                  <Text style={transactionStyles.buttonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[transactionStyles.modalButton, transactionStyles.saveButton]}
+                  onPress={handleAddCard}
+                >
+                  <Text style={transactionStyles.buttonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      </View>
     </View>
-  );
-}
+  );}
