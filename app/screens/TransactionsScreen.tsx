@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -67,19 +67,27 @@ export default function TransactionsScreen() {
     selected: true
   };
 
-  // Load all transactions (including scanned ones)
-  useEffect(() => {
-    // In a real implementation, we would load stored transactions here
-    setTransactions(transactionData);
-    
-    // Add "All" card option to the beginning of the cards array
-    const updatedCards = [allCardsOption, ...cardData.map(card => ({
-      ...card,
-      selected: false
-    }))];
-    
-    setCards(updatedCards);
-  }, []);
+  // Load all transactions and cards when the screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Wallet screen focused - reloading cards data");
+      
+      // Reset transactions to include all data
+      setTransactions(transactionData);
+      
+      // Add "All" card option to the beginning of the cards array
+      const updatedCards = [allCardsOption, ...cardData.map(card => ({
+        ...card,
+        selected: card.id === 0 // Only "All" is selected by default
+      }))];
+      
+      setCards(updatedCards);
+      
+      // Log the currently available cards for debugging
+      console.log(`Loaded ${cardData.length} cards from cardData`);
+      
+    }, []) // Dependencies array should be empty to run every time the screen is focused
+  );
 
   // Navigate to details screen with transaction data
   const handleTransactionPress = (transaction: Transaction) => {

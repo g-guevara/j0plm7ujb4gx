@@ -48,8 +48,8 @@ export interface Transaction {
     return newTransaction.id;
   }
 
-  // Sample card data
-  export const cardData: Card[] = [
+  // Sample card data - ahora es mutable, no const
+  export let cardData: Card[] = [
     {
       id: 1,
       name: "Personal Card",
