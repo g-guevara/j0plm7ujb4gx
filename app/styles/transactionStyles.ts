@@ -10,14 +10,26 @@ export const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: 20,
     paddingTop: 95,
-
-
     paddingBottom: 5,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
     color: "#000",
+  },
+  editCardsButton: {
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  editCardsButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
   },
   // Cards Section
   cardsSection: {

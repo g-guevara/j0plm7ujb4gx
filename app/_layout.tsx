@@ -34,6 +34,13 @@ export default function RootLayout() {
           }} 
         />
         <Stack.Screen 
+          name="screens/CardEditScreen" 
+          options={{ 
+            title: "Edit Cards",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
           name="4o-scan" 
           options={{ 
             title: "Scan",

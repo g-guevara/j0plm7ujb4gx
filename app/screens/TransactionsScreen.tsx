@@ -233,6 +233,12 @@ export default function TransactionsScreen() {
         {/* Header / Title */}
         <View style={transactionStyles.headerContainer}>
           <Text style={transactionStyles.headerTitle}>Wallet</Text>
+          <TouchableOpacity 
+            style={transactionStyles.editCardsButton}
+            onPress={() => router.push("/screens/CardEditScreen")}
+          >
+            <Text style={transactionStyles.editCardsButtonText}>Edit Cards</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Cards Section */}
