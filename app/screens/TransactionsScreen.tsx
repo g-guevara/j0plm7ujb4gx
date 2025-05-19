@@ -72,8 +72,8 @@ export default function TransactionsScreen() {
     useCallback(() => {
       console.log("Wallet screen focused - reloading cards data");
       
-      // Reset transactions to include all data
-      setTransactions(transactionData);
+      // IMPORTANT: Always reload transactions from the source
+      setTransactions([...transactionData]);
       
       // Add "All" card option to the beginning of the cards array
       const updatedCards = [allCardsOption, ...cardData.map(card => ({
@@ -85,6 +85,7 @@ export default function TransactionsScreen() {
       
       // Log the currently available cards for debugging
       console.log(`Loaded ${cardData.length} cards from cardData`);
+      console.log(`Loaded ${transactionData.length} transactions from transactionData`);
       
     }, []) // Dependencies array should be empty to run every time the screen is focused
   );

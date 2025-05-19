@@ -1,6 +1,6 @@
 import { Router } from "expo-router";
 import { Alert } from "react-native";
-import { transactionData } from "../data/sampleData";
+import { addTransaction } from "../data/sampleData";
 import { PartialTransaction } from "./imageUtils";
 
 /**
@@ -63,12 +63,9 @@ export const saveTransactions = async (
     let savedCount = 0;
     
     for (const transaction of selectedTransactions) {
-      // Crear un nuevo ID para la transacción
-      const newId = Math.max(...transactionData.map(t => t.id)) + 1 + savedCount;
-      
       // Crear la nueva transacción completa
       const newTransaction = {
-        id: newId,
+        id: undefined, // Let addTransaction assign an ID
         date: transaction.date || new Date().toISOString().split('T')[0],
         category: transaction.category || "Otros",
         name: transaction.name || "Transacción sin nombre",
@@ -76,9 +73,9 @@ export const saveTransactions = async (
         cardId: transaction.cardId || cardId // Use transaction's cardId if available, otherwise use the provided cardId
       };
 
-      // En una app real, aquí guardaríamos la transacción
-      // await saveTransaction(newTransaction);
-      addLog(`Guardaría transacción: ${JSON.stringify(newTransaction)}`);
+      // Actually save the transaction using the addTransaction function
+      const newId = addTransaction(newTransaction);
+      addLog(`Transacción guardada con ID: ${newId}`);
       
       savedCount++;
     }
