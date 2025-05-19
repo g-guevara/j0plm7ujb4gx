@@ -84,7 +84,7 @@ export default function ScanScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Escanear Transacciones (Debug)</Text>
+        <Text style={styles.title}>Escanear Transacciones </Text>
         <Text style={styles.subtitle}>
           Escaneo por lotes - Múltiples imágenes
         </Text>
@@ -95,15 +95,7 @@ export default function ScanScreen() {
         )}
       </View>
 
-      {/* Botón para configurar API Key */}
-      <TouchableOpacity 
-        style={styles.apiKeyButton} 
-        onPress={() => setShowApiKeyInput(true)}
-      >
-        <Text style={styles.apiKeyButtonText}>
-          {apiKey ? "Cambiar API Key de OpenAI" : "Configurar API Key de OpenAI"}
-        </Text>
-      </TouchableOpacity>
+
 
       {/* Modal para ingresar API Key */}
       {showApiKeyInput && (
@@ -215,22 +207,7 @@ export default function ScanScreen() {
         )}
       </View>
 
-      {/* Sección de logs de depuración */}
-      <View style={styles.logsContainer}>
-        <Text style={styles.logsTitle}>Logs de depuración ({logs.length})</Text>
-        <Button 
-          title="Limpiar logs" 
-          onPress={() => setLogs([])} 
-          color="#666"
-        />
-        <ScrollView style={styles.logsScrollView}>
-          {logs.map((log, index) => (
-            <Text key={index} style={styles.logLine}>
-              {log}
-            </Text>
-          ))}
-        </ScrollView>
-      </View>
+
 
       {/* Resultados de las transacciones escaneadas */}
       {scannedTransactions.length > 0 && (
