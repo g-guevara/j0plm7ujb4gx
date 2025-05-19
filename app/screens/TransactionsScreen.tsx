@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   StatusBar,
@@ -36,6 +36,7 @@ const localStyles = StyleSheet.create({
 export default function TransactionsScreen() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>(transactionData);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactionData);
   const [cards, setCards] = useState<Card[]>(cardData);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [newCardName, setNewCardName] = useState("");
@@ -64,6 +65,27 @@ export default function TransactionsScreen() {
     selected: true
   };
 
+  // Filter transactions based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      // If search query is empty, show all transactions
+      setFilteredTransactions(transactions);
+    } else {
+      // Filter transactions that match the search query
+      const lowercaseQuery = searchQuery.toLowerCase().trim();
+      const filtered = transactions.filter(transaction => 
+        transaction.name.toLowerCase().includes(lowercaseQuery) || 
+        transaction.category.toLowerCase().includes(lowercaseQuery)
+      );
+      setFilteredTransactions(filtered);
+    }
+  }, [searchQuery, transactions]);
+
+  // Handle search query changes
+  const handleSearchQueryChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
   // Load all transactions and cards when the screen gains focus
   useFocusEffect(
     useCallback(() => {
@@ -71,6 +93,12 @@ export default function TransactionsScreen() {
       
       // IMPORTANT: Always reload transactions from the source
       setTransactions([...transactionData]);
+      
+      // Also reset filtered transactions
+      setFilteredTransactions([...transactionData]);
+      
+      // Reset search query
+      setSearchQuery("");
       
       // Add "All" card option to the beginning of the cards array
       const updatedCards = [allCardsOption, ...cardData.map(card => ({
@@ -118,12 +146,12 @@ export default function TransactionsScreen() {
         
         <TransactionComponents.SearchBar 
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearchQueryChange}
           onScanPress={handlers.handleScanPress}
         />
         
         <TransactionComponents.TransactionsList 
-          transactions={transactions}
+          transactions={filteredTransactions}
           onTransactionPress={handlers.handleTransactionPress}
         />
 
