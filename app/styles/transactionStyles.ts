@@ -95,7 +95,7 @@ export const styles = StyleSheet.create({
   // Transactions List
   transactionsList: {
     paddingBottom: 20,
-        backgroundColor: "#FFFFFF", // White background
+    backgroundColor: "#FFFFFF", // White background
   },
   sectionHeader: {
     flexDirection: "row",
@@ -135,6 +135,7 @@ export const styles = StyleSheet.create({
   },
   transactionIconContainer: {
     marginRight: 12,
+    padding: 4, // Add some padding to make the icon more tappable
   },
   transactionIcon: {
     width: 36,

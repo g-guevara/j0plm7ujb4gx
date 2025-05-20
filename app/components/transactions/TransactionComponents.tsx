@@ -41,19 +41,27 @@ const renderCard = ({ item, onCardSelect }: { item: Card, onCardSelect: (id: num
 // Render each transaction item
 const renderTransaction = ({ 
   item, 
-  onPress 
+  onPress,
+  onIconPress
 }: { 
   item: Transaction, 
-  onPress: (transaction: Transaction) => void 
+  onPress: (transaction: Transaction) => void,
+  onIconPress: (transaction: Transaction) => void
 }) => {
   return (
     <TouchableOpacity
       style={transactionStyles.transactionItem}
       onPress={() => onPress(item)}
     >
-      <View style={transactionStyles.transactionIconContainer}>
+      <TouchableOpacity 
+        style={transactionStyles.transactionIconContainer}
+        onPress={(e) => {
+          e.stopPropagation(); // Prevent triggering parent onPress
+          onIconPress(item);
+        }}
+      >
         {renderTransactionIcon(item.category)}
-      </View>
+      </TouchableOpacity>
       
       <View style={transactionStyles.transactionDetails}>
         <Text style={transactionStyles.transactionName}>{item.name}</Text>
@@ -132,15 +140,21 @@ const SearchBar = ({
 // Transactions List Component
 const TransactionsList = ({ 
   transactions, 
-  onTransactionPress 
+  onTransactionPress,
+  onTransactionIconPress
 }: { 
   transactions: Transaction[], 
-  onTransactionPress: (transaction: Transaction) => void 
+  onTransactionPress: (transaction: Transaction) => void,
+  onTransactionIconPress: (transaction: Transaction) => void
 }) => (
   <SectionList
     sections={groupTransactionsByDate(transactions)}
     keyExtractor={(item) => item.id.toString()}
-    renderItem={({ item }) => renderTransaction({ item, onPress: onTransactionPress })}
+    renderItem={({ item }) => renderTransaction({ 
+      item, 
+      onPress: onTransactionPress, 
+      onIconPress: onTransactionIconPress
+    })}
     renderSectionHeader={renderSectionHeader}
     stickySectionHeadersEnabled={true}
     contentContainerStyle={transactionStyles.transactionsList}

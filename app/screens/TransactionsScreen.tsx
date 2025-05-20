@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -11,8 +12,11 @@ import {
 import { Card, cardData, Transaction, transactionData } from "../data/sampleData";
 import { styles as transactionStyles } from "../styles/transactionStyles";
 
-import { TransactionComponents } from "../components/transactions/TransactionComponents";
 
+import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
+
+
+import { TransactionComponents } from "../components/transactions/TransactionComponents";
 import { TransactionHandlers } from "../components/transactions/TransactionHandlers";
 
 // Create our own styles that won't conflict with transactionStyles
@@ -36,12 +40,15 @@ const localStyles = StyleSheet.create({
 export default function TransactionsScreen() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<Transaction[]>(transactionData);
-  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>(transactionData);
   const [cards, setCards] = useState<Card[]>(cardData);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [newCardName, setNewCardName] = useState("");
   const [newCardColor, setNewCardColor] = useState("#3498db");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // State for category selection modal
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   const handlers = TransactionHandlers({
     cards,
@@ -65,25 +72,36 @@ export default function TransactionsScreen() {
     selected: true
   };
 
-  // Filter transactions based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      // If search query is empty, show all transactions
-      setFilteredTransactions(transactions);
-    } else {
-      // Filter transactions that match the search query
-      const lowercaseQuery = searchQuery.toLowerCase().trim();
-      const filtered = transactions.filter(transaction => 
-        transaction.name.toLowerCase().includes(lowercaseQuery) || 
-        transaction.category.toLowerCase().includes(lowercaseQuery)
-      );
-      setFilteredTransactions(filtered);
-    }
-  }, [searchQuery, transactions]);
+  // Handle transaction icon press to open category selection modal
+  const handleTransactionIconPress = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setShowCategoryModal(true);
+  };
 
-  // Handle search query changes
-  const handleSearchQueryChange = (query: string) => {
-    setSearchQuery(query);
+  // Handle category selection
+  const handleCategorySelect = (category: string, transactionId: number) => {
+    // Find and update the transaction with the new category
+    const updatedTransactions = transactions.map(transaction => 
+      transaction.id === transactionId 
+        ? { ...transaction, category: category }
+        : transaction
+    );
+    
+    // Update the transactions data
+    setTransactions(updatedTransactions);
+    
+    // Also update the original data source
+    const index = transactionData.findIndex(t => t.id === transactionId);
+    if (index !== -1) {
+      transactionData[index].category = category;
+    }
+    
+    // Close the modal
+    setShowCategoryModal(false);
+    setSelectedTransaction(null);
+    
+    // Show confirmation
+    Alert.alert("Category Updated", `Transaction category updated to ${category}`);
   };
 
   // Load all transactions and cards when the screen gains focus
@@ -93,12 +111,6 @@ export default function TransactionsScreen() {
       
       // IMPORTANT: Always reload transactions from the source
       setTransactions([...transactionData]);
-      
-      // Also reset filtered transactions
-      setFilteredTransactions([...transactionData]);
-      
-      // Reset search query
-      setSearchQuery("");
       
       // Add "All" card option to the beginning of the cards array
       const updatedCards = [allCardsOption, ...cardData.map(card => ({
@@ -146,13 +158,14 @@ export default function TransactionsScreen() {
         
         <TransactionComponents.SearchBar 
           searchQuery={searchQuery}
-          setSearchQuery={handleSearchQueryChange}
+          setSearchQuery={setSearchQuery}
           onScanPress={handlers.handleScanPress}
         />
         
         <TransactionComponents.TransactionsList 
-          transactions={filteredTransactions}
+          transactions={transactions}
           onTransactionPress={handlers.handleTransactionPress}
+          onTransactionIconPress={handleTransactionIconPress}
         />
 
         {/* Add Card Modal */}
@@ -164,6 +177,17 @@ export default function TransactionsScreen() {
           setNewCardColor={setNewCardColor}
           setShowAddCardModal={setShowAddCardModal}
           handleAddCard={handlers.handleAddCard}
+        />
+        
+        {/* Category Selection Modal */}
+        <CategorySelectionModal
+          visible={showCategoryModal}
+          transaction={selectedTransaction}
+          onClose={() => {
+            setShowCategoryModal(false);
+            setSelectedTransaction(null);
+          }}
+          onSelectCategory={handleCategorySelect}
         />
       </View>
     </View>
