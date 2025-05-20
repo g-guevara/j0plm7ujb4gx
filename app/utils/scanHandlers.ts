@@ -2,6 +2,7 @@ import { Alert } from "react-native";
 import { PartialTransaction, pickImages, processTransactions } from "./imageUtils";
 import { callOpenAI, extractTransactionsFromResponse, prepareImageBase64 } from "./openiaService";
 import { saveApiKey } from "./secureStorage";
+import { applyTransactionMapping } from "./transactionMapping";
 
 /**
  * Gestiona la selección de múltiples imágenes
@@ -120,14 +121,38 @@ export const processImage = async (
     throw new Error("No se encontraron transacciones en la respuesta");
   }
   
-  // Add cardId to all transactions
-  const transactionsWithCardId = extractedTransactions.map(transaction => ({
-    ...transaction,
-    cardId: cardId
-  }));
+  // Add cardId to all transactions and apply mappings
+  const processedTransactions = [];
+  for (const transaction of extractedTransactions) {
+    let processedTransaction = { 
+      ...transaction,
+      cardId: cardId 
+    };
+    
+    // Apply name/category mapping if available
+    if (transaction.name) {
+      try {
+        const mappedData = await applyTransactionMapping({
+          name: transaction.name,
+          category: transaction.category || "Otros"
+        });
+        
+        if (mappedData.wasModified) {
+          addLog(`Aplicando mapeo para "${transaction.name}": ${mappedData.name} (${mappedData.category})`);
+          processedTransaction.name = mappedData.name;
+          processedTransaction.category = mappedData.category;
+        }
+      } catch (error) {
+        // If mapping fails, just continue with original values
+        addLog(`Aviso: No se pudo aplicar mapeo para "${transaction.name}"`);
+      }
+    }
+    
+    processedTransactions.push(processedTransaction);
+  }
   
   // Procesar transacciones
-  return processTransactions(transactionsWithCardId, addLog);
+  return processTransactions(processedTransactions, addLog);
 };
 
 /**

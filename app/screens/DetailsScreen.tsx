@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   Text,
   TextInput,
@@ -15,6 +16,7 @@ import { styles } from "../styles/DetailStyles";
 import { DetailsComponents } from "../components/DetailComponents";
 import { DetailsHandlers } from "../components/DetailHandlers";
 import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
+import { applyTransactionMapping, saveTransactionMapping } from "../utils/transactionMapping";
 
 export default function DetailsScreen() {
   // Get the transactionId parameter from the URL
@@ -65,6 +67,64 @@ export default function DetailsScreen() {
     setShowCategoryModal(false);
   };
 
+  // Enhanced save transaction handler that also saves the mapping
+  const saveTransactionWithMapping = async () => {
+    // First, validate inputs
+    if (!editedName.trim()) {
+      Alert.alert("Error", "Transaction name cannot be empty");
+      return;
+    }
+
+    if (!editedCategory.trim()) {
+      Alert.alert("Error", "Category cannot be empty");
+      return;
+    }
+
+    // Check if name or category was changed from original
+    const nameChanged = editedName !== transaction.name;
+    const categoryChanged = editedCategory !== transaction.category;
+
+    // If either was changed, save the mapping
+    if (nameChanged || categoryChanged) {
+      // Save original to custom mapping
+      await saveTransactionMapping(
+        transaction.name,
+        editedName,
+        editedCategory
+      );
+    }
+
+    // Now save the transaction normally
+    handlers.saveTransaction();
+  };
+
+  // Check for mappings when component mounts
+  useEffect(() => {
+    const checkForMappings = async () => {
+      if (transaction) {
+        const { name, category, wasModified } = await applyTransactionMapping({
+          name: transaction.name,
+          category: transaction.category
+        });
+
+        // If there was a mapping found, update our state
+        if (wasModified) {
+          setEditedName(name);
+          setEditedCategory(category);
+          
+          // Also update the original transaction in the data array
+          if (transactionIndex !== -1) {
+            const allTransactions = transactionData;
+            allTransactions[transactionIndex].name = name;
+            allTransactions[transactionIndex].category = category;
+          }
+        }
+      }
+    };
+
+    checkForMappings();
+  }, [transaction]);
+
   // If no transaction is found, show an error message
   if (!transaction) {
     return (
@@ -80,7 +140,7 @@ export default function DetailsScreen() {
       <DetailsComponents.TitleHeader 
         isEditing={isEditing}
         onEdit={handlers.toggleEditMode}
-        onSave={handlers.saveTransaction}
+        onSave={saveTransactionWithMapping}
       />
 
       {/* Transaction Amount Card */}
