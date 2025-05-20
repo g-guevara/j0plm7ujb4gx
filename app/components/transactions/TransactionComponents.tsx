@@ -11,8 +11,12 @@ import {
 } from "react-native";
 import { Card, Transaction } from "../../data/sampleData";
 import { styles as transactionStyles } from "../../styles/transactionStyles";
+
+
+import SwipeableTransaction from "../SwipableTransaction";
+
+
 import {
-  formatCurrency,
   groupTransactionsByDate,
   renderTransactionIcon
 } from "./transactionHelpers";
@@ -34,43 +38,6 @@ const renderCard = ({ item, onCardSelect }: { item: Card, onCardSelect: (id: num
       {isSelected && (
         <Text style={transactionStyles.cardAmount}>$23,00</Text>
       )}
-    </TouchableOpacity>
-  );
-};
-
-// Render each transaction item
-const renderTransaction = ({ 
-  item, 
-  onPress,
-  onIconPress
-}: { 
-  item: Transaction, 
-  onPress: (transaction: Transaction) => void,
-  onIconPress: (transaction: Transaction) => void
-}) => {
-  return (
-    <TouchableOpacity
-      style={transactionStyles.transactionItem}
-      onPress={() => onPress(item)}
-    >
-      <TouchableOpacity 
-        style={transactionStyles.transactionIconContainer}
-        onPress={(e) => {
-          e.stopPropagation(); // Prevent triggering parent onPress
-          onIconPress(item);
-        }}
-      >
-        {renderTransactionIcon(item.category)}
-      </TouchableOpacity>
-      
-      <View style={transactionStyles.transactionDetails}>
-        <Text style={transactionStyles.transactionName}>{item.name}</Text>
-        <Text style={transactionStyles.transactionCategory}>{item.category}</Text>
-      </View>
-      
-      <Text style={transactionStyles.transactionAmount}>
-        {formatCurrency(item.mount)}
-      </Text>
     </TouchableOpacity>
   );
 };
@@ -141,20 +108,26 @@ const SearchBar = ({
 const TransactionsList = ({ 
   transactions, 
   onTransactionPress,
-  onTransactionIconPress
+  onTransactionIconPress,
+  onDeleteTransaction
 }: { 
   transactions: Transaction[], 
   onTransactionPress: (transaction: Transaction) => void,
-  onTransactionIconPress: (transaction: Transaction) => void
+  onTransactionIconPress: (transaction: Transaction) => void,
+  onDeleteTransaction: (transactionId: number) => void
 }) => (
   <SectionList
     sections={groupTransactionsByDate(transactions)}
     keyExtractor={(item) => item.id.toString()}
-    renderItem={({ item }) => renderTransaction({ 
-      item, 
-      onPress: onTransactionPress, 
-      onIconPress: onTransactionIconPress
-    })}
+    renderItem={({ item }) => (
+      <SwipeableTransaction
+        item={item}
+        onPress={onTransactionPress}
+        onIconPress={onTransactionIconPress}
+        onDelete={onDeleteTransaction}
+        renderTransactionIcon={renderTransactionIcon}
+      />
+    )}
     renderSectionHeader={renderSectionHeader}
     stickySectionHeadersEnabled={true}
     contentContainerStyle={transactionStyles.transactionsList}

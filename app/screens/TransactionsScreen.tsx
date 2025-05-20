@@ -12,10 +12,7 @@ import {
 import { Card, cardData, Transaction, transactionData } from "../data/sampleData";
 import { styles as transactionStyles } from "../styles/transactionStyles";
 
-
 import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
-
-
 import { TransactionComponents } from "../components/transactions/TransactionComponents";
 import { TransactionHandlers } from "../components/transactions/TransactionHandlers";
 
@@ -104,6 +101,24 @@ export default function TransactionsScreen() {
     Alert.alert("Category Updated", `Transaction category updated to ${category}`);
   };
 
+  // Handle transaction deletion
+  const handleDeleteTransaction = (transactionId: number) => {
+    // Remove from the state array
+    const updatedTransactions = transactions.filter(
+      transaction => transaction.id !== transactionId
+    );
+    setTransactions(updatedTransactions);
+    
+    // Remove from the original data source
+    const index = transactionData.findIndex(t => t.id === transactionId);
+    if (index !== -1) {
+      transactionData.splice(index, 1);
+    }
+    
+    // Show success message
+    Alert.alert("Transaction Deleted", "The transaction has been deleted successfully.");
+  };
+
   // Load all transactions and cards when the screen gains focus
   useFocusEffect(
     useCallback(() => {
@@ -166,6 +181,7 @@ export default function TransactionsScreen() {
           transactions={transactions}
           onTransactionPress={handlers.handleTransactionPress}
           onTransactionIconPress={handleTransactionIconPress}
+          onDeleteTransaction={handleDeleteTransaction}
         />
 
         {/* Add Card Modal */}
