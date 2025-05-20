@@ -84,18 +84,66 @@ export default function DetailsScreen() {
     const nameChanged = editedName !== transaction.name;
     const categoryChanged = editedCategory !== transaction.category;
 
-    // If either was changed, save the mapping
+    // If either was changed, prompt user for scope of changes
     if (nameChanged || categoryChanged) {
-      // Save original to custom mapping
-      await saveTransactionMapping(
-        transaction.name,
-        editedName,
-        editedCategory
+      Alert.alert(
+        "Apply Changes",
+        `You've changed ${nameChanged ? (categoryChanged ? "name and category" : "name") : "category"} for this transaction.`,
+        [
+          {
+            text: "Only this transaction",
+            onPress: () => {
+              // Just update this transaction without saving mapping
+              handlers.saveTransaction();
+            }
+          },
+          {
+            text: "All existing transactions",
+            onPress: () => {
+              // Update all existing transactions with this name
+              updateAllExistingTransactions();
+            }
+          },
+          {
+            text: "All existing & future",
+            onPress: () => {
+              // Update all existing and save mapping for future
+              updateAllExistingTransactions();
+              saveTransactionMapping(transaction.name, editedName, editedCategory);
+            }
+          }
+        ],
+        { cancelable: false }
       );
+    } else {
+      // No changes in name/category, just save
+      handlers.saveTransaction();
     }
+  };
 
-    // Now save the transaction normally
+  // Helper function to update all existing transactions with the same name
+  const updateAllExistingTransactions = () => {
+    // Find all transactions with the same original name
+    const originalName = transaction.name;
+    let count = 0;
+    
+    // Update all matching transactions in the data array
+    for (let i = 0; i < transactionData.length; i++) {
+      if (transactionData[i].name === originalName) {
+        transactionData[i].name = editedName;
+        transactionData[i].category = editedCategory;
+        count++;
+      }
+    }
+    
+    // Save the current transaction through the normal handler
     handlers.saveTransaction();
+    
+    // Notify user about the updates
+    Alert.alert(
+      "Transactions Updated",
+      `Updated ${count} transaction${count !== 1 ? 's' : ''} with name "${originalName}".`
+    );
   };
 
   // Check for mappings when component mounts
