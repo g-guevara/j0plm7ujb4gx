@@ -43,6 +43,13 @@ export default function RootLayout() {
           }} 
         />
         <Stack.Screen 
+          name="screens/ProfileScreen" 
+          options={{ 
+            title: "Profile",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
           name="4o-scan" 
           options={{ 
             title: "Scan",

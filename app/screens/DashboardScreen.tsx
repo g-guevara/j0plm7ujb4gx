@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Dimensions,
@@ -17,6 +18,7 @@ const SEGMENTS = ["D", "W", "M", "6M", "Y"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const [totalAmount, setTotalAmount] = useState(0);
   const [recentTransactions, setRecentTransactions] = useState(transactionData.slice(0, 3));
   const [selectedSegment, setSelectedSegment] = useState(2); // M (Month) selected by default
@@ -257,6 +259,14 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
+        <TouchableOpacity 
+          onPress={() => router.push("/screens/ProfileScreen")}
+          style={styles.profileIcon}
+        >
+          <Svg viewBox="0 0 24 24" width={28} height={28} fill="white">
+            <Path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" clipRule="evenodd" />
+          </Svg>
+        </TouchableOpacity>
       </View>
 
       {/* Segmented Control */}
@@ -399,6 +409,9 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 95,
     paddingBottom: 10,
@@ -407,7 +420,9 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     color: "#000000",
-    marginBottom: 10,
+  },
+  profileIcon: {
+    padding: 5, // Add some padding to make it easier to tap
   },
   // Segmented Control
   segmentedControlContainer: {
