@@ -144,6 +144,16 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
+  // New styles for category selector
+  categorySelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingRight: 8,
+    backgroundColor: "#fff",
+  },
   cardChip: {
     flexDirection: "row",
     alignItems: "center",
