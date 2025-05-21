@@ -1,99 +1,115 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-
-
 import BudgetBarChart from "../components/dashboard/BudgetBarChart";
-
-
-import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
-
 import { DonutChart } from "../components/dashboard/DonutChart";
-
-
-import { transactionData } from "../data/sampleData";
-
-import { MONTHS, SEGMENTS } from "../components/dashboard/DonutUtils";
-
+import { MONTHS, SEGMENTS, getCategoryIcon } from "../components/dashboard/DonutUtils";
+import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
+import { Transaction, transactionData } from "../data/sampleData";
 import { styles } from "../styles/DashboardScreenStyles";
 
+// Define budget values for categories (we'll use these since we don't have actual budget data)
+const CATEGORY_BUDGETS: Record<string, number> = {
+  "Groceries": 240000,
+  "Rent": 600000,
+  "Bills": 190000,
+  "Entertainment": 120000,
+  "Transportation": 140000,
+  "Dining": 150000,
+  "Shopping": 200000,
+  "Healthcare": 100000,
+};
+
+// Default budget for categories without specific budget
+const DEFAULT_BUDGET = 100000;
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [recentTransactions, setRecentTransactions] = useState(transactionData.slice(0, 3));
   const [selectedSegment, setSelectedSegment] = useState(2); // M (Month) selected by default
   const [selectedFilter, setSelectedFilter] = useState("Debit");
   const [currentPeriod, setCurrentPeriod] = useState(new Date());
   const [categories, setCategories] = useState<{name: string, amount: number, color: string}[]>([]);
+  const [expenseHistory, setExpenseHistory] = useState<number[]>([]);
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [budgetCategories, setBudgetCategories] = useState<{
+    name: string;
+    spent: number;
+    budget: number;
+    icon: string;
+    color: string;
+  }[]>([]);
   
-  // Sample data for the expense history chart
-  const expenseHistoryData = [
-    1200, 1250, 1300, 1280, 1350, 1400, 1450, 
-    1500, 1520, 1580, 1600, 1650, 1700, 1750, 
-    1850, 1900, 2000, 2100, 2200, 2300, 2400, 
-    2500, 2700, 3000, 3500, 4000, 4466
-  ];
-  
-  // Sample data for budget categories
-  const budgetCategories = [
-    {
-      name: "Clothing & Shoes",
-      spent: 145741,
-      budget: 240000,
-      icon: "shirt-outline",
-      color: "#4CAF50"
-    },
-    {
-      name: "Eating Out",
-      spent: 118238,
-      budget: 140000,
-      icon: "restaurant-outline",
-      color: "#2196F3"
-    },
-    {
-      name: "Entertainment",
-      spent: 84349,
-      budget: 190000,
-      icon: "game-controller-outline",
-      color: "#F44336"
-    }
+  // Category colors
+  const categoryColors = [
+    "#f39c12", // Orange
+    "#3498db", // Blue
+    "#e74c3c", // Red
+    "#9b59b6", // Purple
+    "#2ecc71", // Green
+    "#1abc9c", // Teal
+    "#e67e22", // Dark Orange
+    "#f1c40f"  // Yellow
   ];
 
+  // Filter transactions based on selected time period
+  const filteredTransactions = useMemo(() => {
+    const segmentType = SEGMENTS[selectedSegment];
+    const now = new Date(currentPeriod);
+    
+    return transactionData.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      
+      switch (segmentType) {
+        case "D": // Day
+          return transactionDate.getDate() === now.getDate() &&
+                 transactionDate.getMonth() === now.getMonth() &&
+                 transactionDate.getFullYear() === now.getFullYear();
+        case "W": // Week
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          return transactionDate >= startOfWeek && transactionDate <= endOfWeek;
+        case "M": // Month
+          return transactionDate.getMonth() === now.getMonth() &&
+                 transactionDate.getFullYear() === now.getFullYear();
+        case "6M": // 6 Months
+          const sixMonthsAgo = new Date(now);
+          sixMonthsAgo.setMonth(now.getMonth() - 5);
+          return transactionDate >= sixMonthsAgo && transactionDate <= now;
+        case "Y": // Year
+          return transactionDate.getFullYear() === now.getFullYear();
+        default:
+          return true;
+      }
+    });
+  }, [selectedSegment, currentPeriod, transactionData]);
+
+  // Process transaction data when filtered transactions change
   useEffect(() => {
-    // Get current date/month for the time period display
-    const now = new Date();
-    setCurrentPeriod(now);
+    // Calculate total amount
+    const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.mount, 0);
+    setTotalSpent(total);
 
-    // Calculate total amount across all transactions
-    const total = transactionData.reduce((sum, transaction) => sum + transaction.mount, 0);
-    setTotalAmount(total);
+    // Process category data for DonutChart
+    processCategoryData(filteredTransactions);
+    
+    // Process historical data for ExpenseHistoryChart
+    processHistoricalData(filteredTransactions);
+    
+    // Process budget data for BudgetBarChart
+    processBudgetData(filteredTransactions);
+  }, [filteredTransactions]);
 
-    // Get recent transactions (latest 5)
-    const sorted = [...transactionData].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    setRecentTransactions(sorted.slice(0, 5));
-
-    // Calculate totals for each category
+  // Group transactions by category for DonutChart
+  const processCategoryData = (transactions: Transaction[]) => {
     const categoryMap = new Map<string, {amount: number, color: string}>();
     
-    // Assign colors and calculate totals for each category
-    const categoryColors = [
-      "#f39c12", // Orange for Rent
-      "#3498db", // Blue for Groceries
-      "#e74c3c", // Red for Bills
-      "#9b59b6", // Purple for Entertainment
-      "#2ecc71", // Green for Transportation
-      "#1abc9c", // Teal for Dining
-      "#e67e22", // Dark Orange for Shopping
-      "#f1c40f"  // Yellow for Healthcare
-    ];
-    
-    transactionData.forEach(transaction => {
+    // Group transactions by category and sum amounts
+    transactions.forEach(transaction => {
       if (!categoryMap.has(transaction.category)) {
         const colorIndex = categoryMap.size % categoryColors.length;
         categoryMap.set(transaction.category, {
@@ -118,7 +134,85 @@ export default function DashboardScreen() {
     categoryArray.sort((a, b) => b.amount - a.amount);
     
     setCategories(categoryArray);
-  }, []);
+  };
+
+  // Process transactions into time series data for ExpenseHistoryChart
+  const processHistoricalData = (transactions: Transaction[]) => {
+    // Sort transactions by date
+    const sortedTransactions = [...transactions].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    
+    // For simplicity, we'll create daily totals for the current month
+    // In a real app, you might want to adjust based on selected time period
+    const dailyTotals: number[] = [];
+    
+    // Get days in current month
+    const now = new Date(currentPeriod);
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    
+    // Initialize with zeros
+    for (let i = 0; i < daysInMonth; i++) {
+      dailyTotals.push(0);
+    }
+    
+    // Sum transactions by day
+    sortedTransactions.forEach(transaction => {
+      const date = new Date(transaction.date);
+      // Only include transactions from current month
+      if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
+        const day = date.getDate() - 1; // 0-indexed
+        dailyTotals[day] += transaction.mount;
+      }
+    });
+    
+    // Calculate cumulative sums for running total
+    const cumulativeTotals = [];
+    let runningTotal = 0;
+    
+    for (let i = 0; i < dailyTotals.length; i++) {
+      runningTotal += dailyTotals[i];
+      cumulativeTotals.push(runningTotal);
+    }
+    
+    setExpenseHistory(cumulativeTotals);
+  };
+
+  // Process budget data for BudgetBarChart
+  const processBudgetData = (transactions: Transaction[]) => {
+    const categorySpending = new Map<string, number>();
+    
+    // Sum spending by category
+    transactions.forEach(transaction => {
+      const current = categorySpending.get(transaction.category) || 0;
+      categorySpending.set(transaction.category, current + transaction.mount);
+    });
+    
+    // Create budget categories array
+    const budgetCats = Array.from(categorySpending.entries())
+      .map(([name, spent], index) => {
+        // Get appropriate icon for the category
+        const iconName = getCategoryIcon(name);
+        // Get budget for this category (or use default)
+        const budget = CATEGORY_BUDGETS[name] || DEFAULT_BUDGET;
+        // Get color from the category colors array
+        const colorIndex = index % categoryColors.length;
+        
+        return {
+          name,
+          spent,
+          budget,
+          icon: iconName,
+          color: categoryColors[colorIndex]
+        };
+      })
+      // Sort by highest spending first
+      .sort((a, b) => b.spent - a.spent)
+      // Take top 3 categories
+      .slice(0, 3);
+    
+    setBudgetCategories(budgetCats);
+  };
 
   // Format display of current period based on selected segment
   const getPeriodDisplay = () => {
@@ -171,6 +265,9 @@ export default function DashboardScreen() {
     
     setCurrentPeriod(newPeriod);
   };
+
+  // Calculate total budget across all categories
+  const totalBudget = budgetCategories.reduce((sum, category) => sum + category.budget, 0);
 
   return (
     <View style={styles.mainContainer}>
@@ -243,17 +340,39 @@ export default function DashboardScreen() {
         </View>
 
         {/* Donut Chart with Categories */}
-        <DonutChart categories={categories} />
+        {categories.length > 0 ? (
+          <DonutChart categories={categories} />
+        ) : (
+          <View style={styles.donutChartContainer}>
+            <Text>No transaction data available for this period</Text>
+          </View>
+        )}
         
         {/* Expense History Chart */}
-        <ExpenseHistoryChart data={expenseHistoryData} amount={4466} budget={5000} />
+        {expenseHistory.length > 0 ? (
+          <ExpenseHistoryChart 
+            data={expenseHistory} 
+            amount={totalSpent} 
+            budget={totalBudget} 
+          />
+        ) : (
+          <View style={[styles.donutChartContainer, { marginTop: 16 }]}>
+            <Text >No expense history available for this period</Text>
+          </View>
+        )}
         
         {/* Budget Bar Chart */}
-        <BudgetBarChart
-          categories={budgetCategories}
-          totalSpent={1509376}
-          totalBudget={2800000}
-        />
+        {budgetCategories.length > 0 ? (
+          <BudgetBarChart
+            categories={budgetCategories}
+            totalSpent={totalSpent}
+            totalBudget={totalBudget}
+          />
+        ) : (
+          <View style={[styles.donutChartContainer, { marginTop: 16, marginBottom: 16 }]}>
+            <Text>No budget data available for this period</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

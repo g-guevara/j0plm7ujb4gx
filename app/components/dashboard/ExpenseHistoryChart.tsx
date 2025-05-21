@@ -11,10 +11,23 @@ interface ExpenseHistoryChartProps {
 
 export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({ 
   data, 
-  budget, 
+  budget = 5000, 
   title = "SPENT THIS MONTH",
-  amount = 4466
+  amount = 0
 }) => {
+  // Early return if no data
+  if (!data || data.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.amount}>$0</Text>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No expense data for this period</Text>
+        </View>
+      </View>
+    );
+  }
+
   const width = Dimensions.get('window').width - 32; // Full width minus padding
   const height = 180;
   const paddingTop = 30;
@@ -49,7 +62,7 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.amount}>US${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
+      <Text style={styles.amount}>${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
       
       <Svg width={width} height={height}>
         <Defs>
@@ -129,6 +142,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
   },
+  noDataContainer: {
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  }
 });
 
 export default ExpenseHistoryChart;

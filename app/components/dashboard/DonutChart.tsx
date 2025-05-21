@@ -23,6 +23,17 @@ interface DonutChartProps {
 }
 
 export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
+  // Early return if no categories
+  if (!categories || categories.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.chartSection}>
+          <Text style={styles.noDataText}>No transaction data available</Text>
+        </View>
+      </View>
+    );
+  }
+
   const size = Dimensions.get("window").width * 0.7;
   const strokeWidth = 18;
   const radius = (size - strokeWidth) / 2;
@@ -82,9 +93,19 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
     return segments;
   };
 
-  // For the demo, we'll use hardcoded values to match exactly the reference image
-  // In a real implementation, you would use the first category from props
+  // Get the main category (highest spending)
   const mainCategory = categories.length > 0 ? categories[0] : null;
+
+  // Only proceed if we have a main category
+  if (!mainCategory) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.chartSection}>
+          <Text style={styles.noDataText}>No transaction data available</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -172,18 +193,18 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
         
         {/* Center content */}
         <View style={styles.donutChartCenter}>
-          <View style={[styles.categoryIcon, { backgroundColor: "#f8a427" }]}>
+          <View style={[styles.categoryIcon, { backgroundColor: mainCategory.color }]}>
             <Ionicons 
-              name="home-outline"
+              name={getCategoryIcon(mainCategory.name)}
               size={22} 
               color="white" 
             />
           </View>
           <Text style={styles.donutChartAmount}>
-            US$1.700
+            ${mainCategory.amount.toFixed(0)}
           </Text>
           <Text style={styles.donutChartLabel}>
-            RENT
+            {mainCategory.name.toUpperCase()}
           </Text>
         </View>
       </View>
@@ -212,7 +233,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
               </View>
               <Text style={styles.categoryName}>{category.name}</Text>
             </View>
-            <Text style={styles.categoryAmount}>US${category.amount.toFixed(0)}</Text>
+            <Text style={styles.categoryAmount}>${category.amount.toFixed(0)}</Text>
           </View>
         ))}
       </View>
@@ -318,6 +339,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  noDataText: {
+    fontSize: 16,
+    color: '#888',
+    padding: 40,
+    textAlign: 'center',
+  }
 });
 
 export default DonutChart;

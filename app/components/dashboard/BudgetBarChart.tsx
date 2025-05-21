@@ -21,14 +21,26 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
   totalSpent, 
   totalBudget
 }) => {
-  const getProgressWidth = (spent: number, budget: number) => {
+  // Early return for no data
+  if (!categories || categories.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No budget data available</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const getProgressWidth = (spent: number, budget: number): number => {
+    if (budget <= 0) return 0; // Prevent division by zero
     // Calculate percentage spent but cap at 100%
     const percentage = Math.min((spent / budget) * 100, 100);
-    return `${percentage}%`;
+    return percentage;
   };
 
   // Check if we need to show a total row at the top
-  const showTotal = totalSpent !== undefined && totalBudget !== undefined;
+  const showTotal = totalSpent !== undefined && totalBudget !== undefined && totalBudget > 0;
 
   return (
     <View style={styles.container}>
@@ -43,14 +55,17 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
           
           <View style={styles.budgetInfo}>
             <Text style={styles.budgetText}>
-              ${totalSpent.toLocaleString()} / {totalBudget.toLocaleString()}
+              ${totalSpent.toLocaleString()} / ${totalBudget.toLocaleString()}
             </Text>
             
             <View style={styles.progressBarContainer}>
               <View 
                 style={[
                   styles.progressBar, 
-                  { width: getProgressWidth(totalSpent, totalBudget) as any, backgroundColor: '#9C56E8' }
+                  { 
+                    width: `${getProgressWidth(totalSpent, totalBudget)}%`, 
+                    backgroundColor: '#9C56E8' 
+                  } as any
                 ]} 
               />
             </View>
@@ -69,14 +84,17 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
           
           <View style={styles.budgetInfo}>
             <Text style={styles.budgetText}>
-              ${category.spent.toLocaleString()} / {category.budget.toLocaleString()}
+              ${category.spent.toLocaleString()} / ${category.budget.toLocaleString()}
             </Text>
             
             <View style={styles.progressBarContainer}>
               <View 
                 style={[
                   styles.progressBar, 
-                  { width: getProgressWidth(category.spent, category.budget) as any, backgroundColor: '#9C56E8' }
+                  { 
+                    width: `${getProgressWidth(category.spent, category.budget)}%`, 
+                    backgroundColor: category.color 
+                  } as any
                 ]} 
               />
             </View>
@@ -94,6 +112,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginTop: 16,
+    marginBottom: 16, // Added bottom margin
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -141,6 +160,16 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 4,
   },
+  noDataContainer: {
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  }
 });
 
 export default BudgetBarChart;
