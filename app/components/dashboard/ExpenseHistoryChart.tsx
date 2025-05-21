@@ -1,30 +1,52 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
 interface ExpenseHistoryChartProps {
   data: number[];
   budget?: number;
   title?: string;
   amount?: number;
+  timeSegment?: string; // Added timeSegment prop
 }
 
 export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({ 
   data, 
   budget = 5000, 
-  title = "SPENT THIS MONTH",
-  amount = 0
+  title,
+  amount = 0,
+  timeSegment = "M" // Default to Month
 }) => {
   // Validate input data thoroughly
   const validData = data?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
   const validAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
   const validBudget = typeof budget === 'number' && !isNaN(budget) ? budget : 5000;
   
+  // Generate title based on timeSegment
+  const getChartTitle = () => {
+    if (title) return title; // Use provided title if available
+    
+    switch(timeSegment) {
+      case "D":
+        return "SPENT TODAY";
+      case "W":
+        return "SPENT THIS WEEK";
+      case "M":
+        return "SPENT THIS MONTH";
+      case "6M":
+        return "SPENT LAST 6 MONTHS";
+      case "Y":
+        return "SPENT THIS YEAR";
+      default:
+        return "SPEND HISTOGRAM";
+    }
+  };
+  
   // Early return if no valid data
   if (!validData || validData.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{getChartTitle()}</Text>
         <Text style={styles.amount}>$0</Text>
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>No expense data for this period</Text>
@@ -43,15 +65,96 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
   
+  // Ensure all data values are non-negative (floor at 0)
+  const nonNegativeData = validData.map(value => value < 0 ? 0 : value);
+  
   // Calculate max value for scaling (with fallback)
-  let maxValue = Math.max(...validData, validBudget) * 1.1; // 10% headroom
+  let maxValue = Math.max(...nonNegativeData, validBudget) * 1.1; // 10% headroom
   if (!isFinite(maxValue) || maxValue <= 0) maxValue = 1000; // Fallback value if calculation fails
   
+  // Get x-axis labels based on timeSegment
+  const getXAxisLabels = () => {
+    switch(timeSegment) {
+      case "D":
+        return ["12am", "4am", "8am", "12pm", "4pm", "8pm", "11pm"]; // Hours
+      case "W":
+        return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]; // Days of week
+      case "M":
+        return [1, 7, 14, 21, 28, 31]; // Days of month
+      case "6M": {
+        // Get month names for the last 6 months
+        const now = new Date();
+        const labels = [];
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          labels.push(month.toLocaleDateString('en-US', { month: 'short' }));
+        }
+        return labels;
+      }
+      case "Y": {
+        // Month abbreviations
+        return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      }
+      default:
+        return [1, 7, 14, 21, 28, 31]; // Default to days of month
+    }
+  };
+
+  const xAxisLabels = getXAxisLabels();
+  
+  // Determine the number of data points to display based on the time segment
+  const getDataPointsToShow = () => {
+    const dataLength = nonNegativeData.length;
+    if (dataLength <= 1) return nonNegativeData;
+    
+    // For different time segments, choose appropriate number of data points
+    switch(timeSegment) {
+      case "D": // Day - show all 24 hours or available data points
+        return nonNegativeData;
+      case "W": // Week - show all 7 days or available data points
+        return nonNegativeData;
+      case "M": // Month - sample based on days in month or available data
+        // If we have daily data for the month, show appropriate number of points
+        if (dataLength <= 31) return nonNegativeData;
+        // Otherwise sample to match our labels
+        return sampleDataPoints(nonNegativeData, 6);
+      case "6M": // 6 Months - show 6 data points (one per month)
+        return sampleDataPoints(nonNegativeData, 6);
+      case "Y": // Year - show 12 data points (one per month)
+        return sampleDataPoints(nonNegativeData, 12);
+      default:
+        return nonNegativeData;
+    }
+  };
+  
+  // Function to sample data points to match desired number of points
+  const sampleDataPoints = (data: number[], numPoints: number) => {
+    if (data.length <= numPoints) return data;
+    
+    const result = [];
+    const step = data.length / numPoints;
+    
+    for (let i = 0; i < numPoints; i++) {
+      const index = Math.min(Math.floor(i * step), data.length - 1);
+      result.push(data[index]);
+    }
+    
+    // Always include the last data point for continuity
+    if (numPoints > 0 && result.length > 0) {
+      result[result.length - 1] = data[data.length - 1];
+    }
+    
+    return result;
+  };
+  
+  // Get the data points to show in the chart
+  const dataPointsToShow = getDataPointsToShow();
+  
   // Generate chart points with safety checks
-  const points = validData.map((value, index) => {
-    // Ensure values are numbers and not NaN
-    const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
-    const x = paddingLeft + (index / (validData.length - 1)) * chartWidth;
+  const points = dataPointsToShow.map((value, index) => {
+    // Ensure values are numbers and not NaN or negative
+    const safeValue = typeof value === 'number' && !isNaN(value) ? Math.max(0, value) : 0;
+    const x = paddingLeft + (index / Math.max(dataPointsToShow.length - 1, 1)) * chartWidth;
     const y = paddingTop + chartHeight - (safeValue / maxValue) * chartHeight;
     return { x, y };
   });
@@ -60,8 +163,8 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   if (points.length < 2) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.amount}>${validAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
+        <Text style={styles.title}>{getChartTitle()}</Text>
+        <Text style={styles.amount}>${validAmount < 0 ? 0 : validAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>Insufficient data points for chart</Text>
         </View>
@@ -77,13 +180,12 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   // Generate area below the line for gradient fill
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`;
 
-  // Days of the month for x-axis
-  const daysToShow = [1, 6, 11, 16, 21, 26, 31];
-
-  // Safe formatter for currency
+  // Safe formatter for currency - show positive values only
   const formatCurrency = (value: number): string => {
     if (typeof value !== 'number' || isNaN(value)) return "$0";
-    return "$" + value.toLocaleString('en-US', { 
+    // Ensure value is non-negative
+    const nonNegativeValue = Math.max(0, value);
+    return "$" + nonNegativeValue.toLocaleString('en-US', { 
       minimumFractionDigits: 0, 
       maximumFractionDigits: 0 
     });
@@ -91,7 +193,7 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>{getChartTitle()}</Text>
       <Text style={styles.amount}>{formatCurrency(validAmount)}</Text>
       
       <Svg width={width} height={height}>
@@ -101,6 +203,16 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
             <Stop offset="1" stopColor="#9C56E8" stopOpacity={0} />
           </LinearGradient>
         </Defs>
+        
+        {/* Grid lines */}
+        <Line 
+          x1={paddingLeft} 
+          y1={paddingTop + chartHeight} 
+          x2={paddingLeft + chartWidth} 
+          y2={paddingTop + chartHeight} 
+          stroke="#EEEEEE" 
+          strokeWidth={1} 
+        />
         
         {/* Area fill with gradient */}
         <Path
@@ -126,19 +238,20 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
           strokeWidth={2}
         />
         
-        {/* X-axis labels (days) */}
-        {daysToShow.map((day, index) => {
-          const x = paddingLeft + (chartWidth / (daysToShow.length - 1)) * index;
+        {/* X-axis labels */}
+        {xAxisLabels.map((label, index) => {
+          // Calculate label positions to spread them evenly
+          const x = paddingLeft + (chartWidth / (xAxisLabels.length - 1)) * index;
           return (
             <SvgText
-              key={day}
+              key={index}
               x={x}
               y={height - 10}
               textAnchor="middle"
               fontSize={12}
               fill="#999999"
             >
-              {day}
+              {label}
             </SvgText>
           );
         })}

@@ -6,7 +6,6 @@ import Svg, { Path } from "react-native-svg";
 
 import CardFilterDropdown from "../components/dashboard/CardFilterDropdown"; // Import the new component
 
-
 import BudgetBarChart from "../components/dashboard/BudgetBarChart";
 import { DonutChart } from "../components/dashboard/DonutChart";
 import { getCategoryIcon, SEGMENTS } from "../components/dashboard/DonutUtils";
@@ -109,19 +108,35 @@ export default function DashboardScreen() {
 
   // Process transaction data when filtered transactions change
   useEffect(() => {
-    // Calculate total amount
-    const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.mount, 0);
-    setTotalSpent(total);
+    if (filteredTransactions.length > 0) {
+      // Calculate total amount
+      const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.mount, 0);
+      setTotalSpent(total);
 
-    // Process category data for DonutChart
-    processCategoryData(filteredTransactions);
-    
-    // Process historical data for ExpenseHistoryChart
-    processHistoricalData(filteredTransactions);
-    
-    // Process budget data for BudgetBarChart
-    processBudgetData(filteredTransactions);
+      // Process category data for DonutChart
+      processCategoryData(filteredTransactions);
+      
+      // Process historical data for ExpenseHistoryChart
+      processHistoricalData(filteredTransactions);
+      
+      // Process budget data for BudgetBarChart
+      processBudgetData(filteredTransactions);
+    } else {
+      // Reset charts if no data
+      setTotalSpent(0);
+      setCategories([]);
+      setExpenseHistory([]);
+      setBudgetCategories([]);
+    }
   }, [filteredTransactions]);
+
+  // Reprocess data when segment or period changes
+  useEffect(() => {
+    if (filteredTransactions.length > 0) {
+      // Process historical data for ExpenseHistoryChart based on selected segment
+      processHistoricalData(filteredTransactions);
+    }
+  }, [selectedSegment, currentPeriod]);
 
   // Group transactions by category for DonutChart
   const processCategoryData = (transactions: Transaction[]) => {
@@ -162,39 +177,168 @@ export default function DashboardScreen() {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     
-    // For simplicity, we'll create daily totals for the current month
-    // In a real app, you might want to adjust based on selected time period
-    const dailyTotals: number[] = [];
-    
-    // Get days in current month
+    // Get the current segment type
+    const segmentType = SEGMENTS[selectedSegment];
     const now = new Date(currentPeriod);
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     
-    // Initialize with zeros
-    for (let i = 0; i < daysInMonth; i++) {
-      dailyTotals.push(0);
+    // Initialize appropriate data structure based on segment type
+    let chartData: number[] = [];
+    
+    switch(segmentType) {
+      case "D": // Day - hourly data (24 hours)
+        // Initialize with zeros for each hour (0-23)
+        chartData = Array(24).fill(0);
+        
+        // Sum transactions by hour for the current day
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          // Check if transaction is from the selected day
+          if (date.getDate() === now.getDate() && 
+              date.getMonth() === now.getMonth() && 
+              date.getFullYear() === now.getFullYear()) {
+            const hour = date.getHours();
+            chartData[hour] += transaction.mount;
+          }
+        });
+        
+        // Calculate cumulative sums for running total
+        let runningDayTotal = 0;
+        chartData = chartData.map(amount => {
+          runningDayTotal += amount;
+          return runningDayTotal;
+        });
+        break;
+        
+      case "W": // Week - daily data (7 days)
+        // Initialize with zeros for each day of the week (0-6, Sunday-Saturday)
+        chartData = Array(7).fill(0);
+        
+        // Get the start of the week (Sunday)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        
+        // Sum transactions by day for the current week
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          // Check if transaction is within the selected week
+          const dayDiff = Math.floor((date.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+          if (dayDiff >= 0 && dayDiff < 7) {
+            const dayOfWeek = date.getDay();
+            chartData[dayOfWeek] += transaction.mount;
+          }
+        });
+        
+        // Calculate cumulative sums for running total
+        let runningWeekTotal = 0;
+        chartData = chartData.map(amount => {
+          runningWeekTotal += amount;
+          return runningWeekTotal;
+        });
+        break;
+        
+      case "M": // Month - daily data (up to 31 days)
+        // Get days in current month
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        
+        // Initialize with zeros for each day
+        chartData = Array(daysInMonth).fill(0);
+        
+        // Sum transactions by day for the current month
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          // Check if transaction is from the selected month
+          if (date.getMonth() === now.getMonth() && 
+              date.getFullYear() === now.getFullYear()) {
+            const day = date.getDate() - 1; // 0-indexed
+            chartData[day] += transaction.mount;
+          }
+        });
+        
+        // Calculate cumulative sums for running total
+        let runningMonthTotal = 0;
+        chartData = chartData.map(amount => {
+          runningMonthTotal += amount;
+          return runningMonthTotal;
+        });
+        break;
+        
+      case "6M": // 6 Months - monthly data (6 months)
+        // Initialize with zeros for each month (0-5)
+        chartData = Array(6).fill(0);
+        
+        // Calculate start month (5 months before current)
+        const sixMonthsAgo = new Date(now);
+        sixMonthsAgo.setMonth(now.getMonth() - 5);
+        const startMonth = sixMonthsAgo.getMonth();
+        const startYear = sixMonthsAgo.getFullYear();
+        
+        // Sum transactions by month for the last 6 months
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          const transYear = date.getFullYear();
+          const transMonth = date.getMonth();
+          
+          // Calculate months difference
+          const monthDiff = (transYear - startYear) * 12 + (transMonth - startMonth);
+          
+          if (monthDiff >= 0 && monthDiff < 6) {
+            chartData[monthDiff] += transaction.mount;
+          }
+        });
+        
+        // Calculate cumulative sums for running total
+        let runningSixMonthTotal = 0;
+        chartData = chartData.map(amount => {
+          runningSixMonthTotal += amount;
+          return runningSixMonthTotal;
+        });
+        break;
+        
+      case "Y": // Year - monthly data (12 months)
+        // Initialize with zeros for each month (0-11)
+        chartData = Array(12).fill(0);
+        
+        // Sum transactions by month for the current year
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          // Check if transaction is from the selected year
+          if (date.getFullYear() === now.getFullYear()) {
+            const month = date.getMonth();
+            chartData[month] += transaction.mount;
+          }
+        });
+        
+        // Calculate cumulative sums for running total
+        let runningYearTotal = 0;
+        chartData = chartData.map(amount => {
+          runningYearTotal += amount;
+          return runningYearTotal;
+        });
+        break;
+        
+      default:
+        // Fallback to month view if segment is not recognized
+        const defaultDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        chartData = Array(defaultDaysInMonth).fill(0);
+        
+        sortedTransactions.forEach(transaction => {
+          const date = new Date(transaction.date);
+          if (date.getMonth() === now.getMonth() && 
+              date.getFullYear() === now.getFullYear()) {
+            const day = date.getDate() - 1;
+            chartData[day] += transaction.mount;
+          }
+        });
+        
+        let defaultRunningTotal = 0;
+        chartData = chartData.map(amount => {
+          defaultRunningTotal += amount;
+          return defaultRunningTotal;
+        });
+        break;
     }
     
-    // Sum transactions by day
-    sortedTransactions.forEach(transaction => {
-      const date = new Date(transaction.date);
-      // Only include transactions from current month
-      if (date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-        const day = date.getDate() - 1; // 0-indexed
-        dailyTotals[day] += transaction.mount;
-      }
-    });
-    
-    // Calculate cumulative sums for running total
-    const cumulativeTotals = [];
-    let runningTotal = 0;
-    
-    for (let i = 0; i < dailyTotals.length; i++) {
-      runningTotal += dailyTotals[i];
-      cumulativeTotals.push(runningTotal);
-    }
-    
-    setExpenseHistory(cumulativeTotals);
+    setExpenseHistory(chartData);
   };
 
   // Process budget data for BudgetBarChart
@@ -371,7 +515,6 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Rest of the component remains unchanged */}
         {/* Donut Chart with Categories */}
         {categories.length > 0 ? (
           <DonutChart categories={categories} />
@@ -387,6 +530,7 @@ export default function DashboardScreen() {
             data={expenseHistory} 
             amount={totalSpent} 
             budget={totalBudget} 
+            timeSegment={SEGMENTS[selectedSegment]} // Pass the current segment
           />
         ) : (
           <View style={[styles.donutChartContainer, { marginTop: 16 }]}>
