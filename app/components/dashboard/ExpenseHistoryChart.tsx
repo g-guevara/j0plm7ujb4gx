@@ -1,6 +1,9 @@
-import React from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+
+// Define view modes as enum
+type ViewMode = 'ALL' | 'EXPENSES' | 'INCOME';
 
 interface ExpenseHistoryChartProps {
   expenseData: number[]; // Expenses (positive values)
@@ -21,6 +24,9 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   totalIncome = 0,
   timeSegment = "M" // Default to Month
 }) => {
+  // Add state to track the current view mode
+  const [viewMode, setViewMode] = useState<ViewMode>('ALL');
+  
   // Validate input data thoroughly
   const validExpenseData = expenseData?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
   const validIncomeData = incomeData?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
@@ -175,15 +181,59 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
         {netAmount < 0 ? '-' : ''}{formatCurrency(Math.abs(netAmount))}
       </Text>
       
-      {/* Legend */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#E74C3C' }]} />
-          <Text style={styles.legendText}>Expenses: {formatCurrency(validTotalExpense)}</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#2ECC71' }]} />
-          <Text style={styles.legendText}>Income: {formatCurrency(validTotalIncome)}</Text>
+      {/* Elegant Segmented Control */}
+      <View style={styles.segmentedControlWrapper}>
+        <View style={styles.segmentedControl}>
+          <TouchableOpacity 
+            style={[
+              styles.segment,
+              viewMode === 'ALL' && styles.activeSegment
+            ]}
+            onPress={() => setViewMode('ALL')}
+          >
+            <Text style={[
+              styles.segmentText,
+              viewMode === 'ALL' && styles.activeSegmentText
+            ]}>All</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.segment,
+              viewMode === 'EXPENSES' && styles.activeSegment
+            ]}
+            onPress={() => setViewMode('EXPENSES')}
+          >
+            <View style={styles.segmentContent}>
+              <Text style={[
+                styles.segmentText,
+                viewMode === 'EXPENSES' && styles.activeSegmentText
+              ]}>Expenses:</Text>
+              <Text style={[
+                styles.amountText,
+                viewMode === 'EXPENSES' ? styles.activeSegmentText : styles.expenseAmountText
+              ]}>{formatCurrency(validTotalExpense)}</Text>
+            </View>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[
+              styles.segment,
+              viewMode === 'INCOME' && styles.activeSegment
+            ]}
+            onPress={() => setViewMode('INCOME')}
+          >
+            <View style={styles.segmentContent}>
+              <Text style={[
+                styles.segmentText,
+                viewMode === 'INCOME' && styles.activeSegmentText
+              ]}>Income:</Text>
+              <Text style={[
+                styles.amountText,
+                viewMode === 'INCOME' ? styles.activeSegmentText : styles.incomeAmountText
+              ]}>{formatCurrency(validTotalIncome)}</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -194,8 +244,8 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
             <Stop offset="1" stopColor="#E74C3C" stopOpacity={0} />
           </LinearGradient>
           <LinearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#2ECC71" stopOpacity={0.3} />
-            <Stop offset="1" stopColor="#2ECC71" stopOpacity={0} />
+            <Stop offset="0" stopColor="#007aff" stopOpacity={0.3} />
+            <Stop offset="1" stopColor="#007aff" stopOpacity={0} />
           </LinearGradient>
         </Defs>
         
@@ -209,23 +259,23 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
           strokeWidth={1} 
         />
         
-        {/* Area fills with gradients */}
-        {expensePoints.length >= 2 && (
+        {/* Area fills with gradients - conditionally rendered based on viewMode */}
+        {(viewMode === 'ALL' || viewMode === 'EXPENSES') && expensePoints.length >= 2 && (
           <Path
             d={expenseAreaPath}
             fill="url(#expenseGradient)"
           />
         )}
         
-        {incomePoints.length >= 2 && (
+        {(viewMode === 'ALL' || viewMode === 'INCOME') && incomePoints.length >= 2 && (
           <Path
             d={incomeAreaPath}
             fill="url(#incomeGradient)"
           />
         )}
         
-        {/* Main lines */}
-        {expensePoints.length >= 2 && (
+        {/* Main lines - conditionally rendered based on viewMode */}
+        {(viewMode === 'ALL' || viewMode === 'EXPENSES') && expensePoints.length >= 2 && (
           <Path
             d={expenseLinePath}
             stroke="#E74C3C"
@@ -234,17 +284,17 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
           />
         )}
         
-        {incomePoints.length >= 2 && (
+        {(viewMode === 'ALL' || viewMode === 'INCOME') && incomePoints.length >= 2 && (
           <Path
             d={incomeLinePath}
-            stroke="#2ECC71"
+            stroke="#007aff"
             strokeWidth={3}
             fill="none"
           />
         )}
         
-        {/* Last points with dots */}
-        {expensePoints.length >= 2 && (
+        {/* Last points with dots - conditionally rendered based on viewMode */}
+        {(viewMode === 'ALL' || viewMode === 'EXPENSES') && expensePoints.length >= 2 && (
           <Circle
             cx={expensePoints[expensePoints.length - 1].x}
             cy={expensePoints[expensePoints.length - 1].y}
@@ -255,12 +305,12 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
           />
         )}
         
-        {incomePoints.length >= 2 && (
+        {(viewMode === 'ALL' || viewMode === 'INCOME') && incomePoints.length >= 2 && (
           <Circle
             cx={incomePoints[incomePoints.length - 1].x}
             cy={incomePoints[incomePoints.length - 1].y}
             r={6}
-            fill="#2ECC71"
+            fill="#007aff"
             stroke="white"
             strokeWidth={2}
           />
@@ -311,10 +361,10 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 36,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   positiveAmount: {
-    color: '#2ECC71', // Green for positive (income > expense)
+    color: '#007aff', // Green for positive (income > expense)
   },
   negativeAmount: {
     color: '#E74C3C', // Red for negative (expense > income)
@@ -329,25 +379,54 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
   },
-  legendContainer: {
+  // Elegant Segmented Control Styles
+  segmentedControlWrapper: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  legendItem: {
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: 3,
+    overflow: 'hidden',
+  },
+  segment: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  segmentContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
+  activeSegment: {
+    backgroundColor: '#555555',
   },
-  legendText: {
-    fontSize: 12,
+  segmentText: {
+    fontSize: 13,
     color: '#666666',
-  }
+    fontWeight: '500',
+  },
+  amountText: {
+    fontSize: 13,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  activeSegmentText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  expenseAmountText: {
+    color: '#E74C3C',
+  },
+  incomeAmountText: {
+    color: '#007aff',
+  },
 });
 
 export default ExpenseHistoryChart;
