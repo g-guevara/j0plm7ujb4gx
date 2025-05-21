@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
 interface ExpenseHistoryChartProps {
   data: number[];
@@ -20,7 +20,7 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   const paddingTop = 30;
   const paddingBottom = 40;
   const paddingLeft = 20;
-  const paddingRight = 20;
+  const paddingRight = 40; // Increased padding on the right
   
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
@@ -40,11 +40,6 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
     i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
   ).join(' ');
   
-  // Generate budget line if provided
-  const budgetY = budget 
-    ? paddingTop + chartHeight - (budget / maxValue) * chartHeight 
-    : null;
-  
   // Generate area below the line for gradient fill
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`;
 
@@ -63,19 +58,6 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
             <Stop offset="1" stopColor="#9C56E8" stopOpacity={0} />
           </LinearGradient>
         </Defs>
-        
-        {/* Budget line (dashed) */}
-        {budgetY && (
-          <Line
-            x1={paddingLeft}
-            y1={budgetY}
-            x2={paddingLeft + chartWidth}
-            y2={budgetY}
-            stroke="#CCCCCC"
-            strokeWidth={2}
-            strokeDasharray="5,5"
-          />
-        )}
         
         {/* Area fill with gradient */}
         <Path

@@ -16,7 +16,7 @@ import { DonutChart } from "../components/dashboard/DonutChart";
 
 import { transactionData } from "../data/sampleData";
 
-import { MONTHS, SEGMENTS, getCategoryIcon } from "../components/dashboard/DonutUtils";
+import { MONTHS, SEGMENTS } from "../components/dashboard/DonutUtils";
 
 import { styles } from "../styles/DashboardScreenStyles";
 
@@ -242,7 +242,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Donut Chart */}
+        {/* Donut Chart with Categories */}
         <DonutChart categories={categories} />
         
         {/* Expense History Chart */}
@@ -254,35 +254,6 @@ export default function DashboardScreen() {
           totalSpent={1509376}
           totalBudget={2800000}
         />
-
-        {/* Categories Tabs */}
-        <View style={styles.categoriesTabContainer}>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Text style={[styles.categoryTabText, styles.categoryTabActive]}>HEAD CATEGORIES</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.categoryTab}>
-            <Text style={styles.categoryTabText}>CATEGORIES</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Categories List */}
-        <View style={styles.categoriesList}>
-          {categories.slice(0, 4).map((category, index) => (
-            <View key={index} style={styles.categoryItem}>
-              <View style={styles.categoryLeft}>
-                <View style={[styles.categoryIndicator, { backgroundColor: category.color }]}>
-                  <Ionicons 
-                    name={getCategoryIcon(category.name)} 
-                    size={18} 
-                    color="#FFFFFF" 
-                  />
-                </View>
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </View>
-              <Text style={styles.categoryAmount}>US${category.amount.toFixed(0)}</Text>
-            </View>
-          ))}
-        </View>
       </ScrollView>
     </View>
   );

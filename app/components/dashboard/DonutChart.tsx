@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Svg, {
     Circle,
     Defs,
@@ -12,7 +12,7 @@ import Svg, {
     Path
 } from "react-native-svg";
 
-import { styles } from "../../styles/DashboardScreenStyles";
+import { getCategoryIcon } from "./DonutUtils";
 
 interface DonutChartProps {
   categories: {
@@ -87,105 +87,237 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
   const mainCategory = categories.length > 0 ? categories[0] : null;
 
   return (
-    <View style={styles.donutChartContainer}>
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Define glow filters for each color */}
-        <Defs>
-          {/* Purple glow filter */}
-          <Filter id="glow-0" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation="3" result="blur" />
-            <FeColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.612 0 0 0 0 0.337 0 0 0 0 0.91 0 0 0 1 0"
-              result="glow"
-            />
-            <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-          </Filter>
+    <View style={styles.container}>
+      {/* Donut Chart Part */}
+      <View style={styles.chartSection}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {/* Define glow filters for each color */}
+          <Defs>
+            {/* Purple glow filter */}
+            <Filter id="glow-0" x="-50%" y="-50%" width="200%" height="200%">
+              <FeGaussianBlur stdDeviation="3" result="blur" />
+              <FeColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.612 0 0 0 0 0.337 0 0 0 0 0.91 0 0 0 1 0"
+                result="glow"
+              />
+              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+            </Filter>
+            
+            {/* Blue glow filter */}
+            <Filter id="glow-1" x="-50%" y="-50%" width="200%" height="200%">
+              <FeGaussianBlur stdDeviation="3" result="blur" />
+              <FeColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
+                result="glow"
+              />
+              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+            </Filter>
+            
+            {/* Pink glow filter */}
+            <Filter id="glow-2" x="-50%" y="-50%" width="200%" height="200%">
+              <FeGaussianBlur stdDeviation="3" result="blur" />
+              <FeColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.949 0 0 0 0 0.478 0 0 0 0 0.694 0 0 0 1 0"
+                result="glow"
+              />
+              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+            </Filter>
+            
+            {/* Orange glow filter */}
+            <Filter id="glow-3" x="-50%" y="-50%" width="200%" height="200%">
+              <FeGaussianBlur stdDeviation="4" result="blur" />
+              <FeColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.973 0 0 0 0 0.643 0 0 0 0 0.153 0 0 0 1 0"
+                result="glow"
+              />
+              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+            </Filter>
+            
+            {/* Blue glow filter (bottom) */}
+            <Filter id="glow-4" x="-50%" y="-50%" width="200%" height="200%">
+              <FeGaussianBlur stdDeviation="3" result="blur" />
+              <FeColorMatrix
+                in="blur"
+                type="matrix"
+                values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
+                result="glow"
+              />
+              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+            </Filter>
+          </Defs>
           
-          {/* Blue glow filter */}
-          <Filter id="glow-1" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation="3" result="blur" />
-            <FeColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
-              result="glow"
-            />
-            <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-          </Filter>
-          
-          {/* Pink glow filter */}
-          <Filter id="glow-2" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation="3" result="blur" />
-            <FeColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.949 0 0 0 0 0.478 0 0 0 0 0.694 0 0 0 1 0"
-              result="glow"
-            />
-            <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-          </Filter>
-          
-          {/* Orange glow filter */}
-          <Filter id="glow-3" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation="4" result="blur" />
-            <FeColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.973 0 0 0 0 0.643 0 0 0 0 0.153 0 0 0 1 0"
-              result="glow"
-            />
-            <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-          </Filter>
-          
-          {/* Blue glow filter (bottom) */}
-          <Filter id="glow-4" x="-50%" y="-50%" width="200%" height="200%">
-            <FeGaussianBlur stdDeviation="3" result="blur" />
-            <FeColorMatrix
-              in="blur"
-              type="matrix"
-              values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
-              result="glow"
-            />
-            <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-          </Filter>
-        </Defs>
-        
-        {/* Background circle */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          stroke="#f2f2f2"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        
-        {/* Render all pill segments */}
-        <G>
-          {renderPillSegments()}
-        </G>
-      </Svg>
-      
-      {/* Center content */}
-      <View style={styles.donutChartCenter}>
-        <View style={[styles.categoryIcon, { backgroundColor: "#f8a427" }]}>
-          <Ionicons 
-            name="home-outline"
-            size={22} 
-            color="white" 
+          {/* Background circle */}
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#f2f2f2"
+            strokeWidth={strokeWidth}
+            fill="transparent"
           />
+          
+          {/* Render all pill segments */}
+          <G>
+            {renderPillSegments()}
+          </G>
+        </Svg>
+        
+        {/* Center content */}
+        <View style={styles.donutChartCenter}>
+          <View style={[styles.categoryIcon, { backgroundColor: "#f8a427" }]}>
+            <Ionicons 
+              name="home-outline"
+              size={22} 
+              color="white" 
+            />
+          </View>
+          <Text style={styles.donutChartAmount}>
+            US$1.700
+          </Text>
+          <Text style={styles.donutChartLabel}>
+            RENT
+          </Text>
         </View>
-        <Text style={styles.donutChartAmount}>
-          US$1.700
-        </Text>
-        <Text style={styles.donutChartLabel}>
-          RENT
-        </Text>
+      </View>
+
+      {/* Categories Tabs */}
+      <View style={styles.categoriesTabContainer}>
+        <TouchableOpacity style={styles.categoryTab}>
+          <Text style={[styles.categoryTabText, styles.categoryTabActive]}>HEAD CATEGORIES</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.categoryTab}>
+          <Text style={styles.categoryTabText}>CATEGORIES</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Categories List */}
+      <View style={styles.categoriesList}>
+        {categories.slice(0, 4).map((category, index) => (
+          <View key={index} style={styles.categoryItem}>
+            <View style={styles.categoryLeft}>
+              <View style={[styles.categoryIndicator, { backgroundColor: category.color }]}>
+                <Ionicons 
+                  name={getCategoryIcon(category.name)} 
+                  size={18} 
+                  color="#FFFFFF" 
+                />
+              </View>
+              <Text style={styles.categoryName}>{category.name}</Text>
+            </View>
+            <Text style={styles.categoryAmount}>US${category.amount.toFixed(0)}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  chartSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingVertical: 20,
+  },
+  donutChartCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutChartAmount: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginTop: 8,
+    color: '#222222',
+  },
+  donutChartLabel: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  categoryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f8a427',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Categories Tabs
+  categoriesTabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f2f2f2',
+    backgroundColor: '#FFFFFF',
+  },
+  categoryTab: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  categoryTabText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#888888',
+  },
+  categoryTabActive: {
+    color: '#000000',
+  },
+  // Categories List
+  categoriesList: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f2f2f2',
+  },
+  categoryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryIndicator: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f39c12',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  categoryName: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  categoryAmount: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});
 
 export default DonutChart;
