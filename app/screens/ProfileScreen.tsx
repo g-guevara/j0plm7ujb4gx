@@ -1,13 +1,19 @@
 // app/screens/ProfileScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Image, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { cardData, transactionData } from "../data/sampleData";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [stats, setStats] = useState({
+    cards: 0,
+    transactions: 0,
+    categories: 0
+  });
   
   // List of available currencies
   const currencies = [
@@ -18,13 +24,69 @@ export default function ProfileScreen() {
     { code: "JPY", name: "Japanese Yen", symbol: "¥" }
   ];
   
-  // List of app categories
-  const categories = [
-    { name: "Groceries", icon: "cart-outline", color: "#2ecc71" },
-    { name: "Rent", icon: "home-outline", color: "#f39c12" },
-    { name: "Bills", icon: "receipt-outline", color: "#e74c3c" },
-    { name: "Transportation", icon: "car-outline", color: "#3498db" }
-  ];
+  // Get unique categories from transactions
+  const getUniqueCategories = () => {
+    const categories = [...new Set(transactionData.map(t => t.category))];
+    return categories.map(category => {
+      let icon = "cube-outline";
+      let color = "#3498db";
+      
+      switch (category.toLowerCase()) {
+        case 'groceries':
+          icon = "cart-outline";
+          color = "#2ecc71";
+          break;
+        case 'rent':
+          icon = "home-outline";
+          color = "#f39c12";
+          break;
+        case 'bills':
+          icon = "receipt-outline";
+          color = "#e74c3c";
+          break;
+        case 'transportation':
+          icon = "car-outline";
+          color = "#3498db";
+          break;
+        case 'dining':
+          icon = "restaurant-outline";
+          color = "#9b59b6";
+          break;
+        case 'shopping':
+          icon = "bag-outline";
+          color = "#1abc9c";
+          break;
+        case 'healthcare':
+          icon = "medical-outline";
+          color = "#34495e";
+          break;
+        case 'entertainment':
+          icon = "film-outline";
+          color = "#e67e22";
+          break;
+        case 'insurance':
+          icon = "shield-outline";
+          color = "#f1c40f";
+          break;
+        default:
+          icon = "cube-outline";
+          color = "#95a5a6";
+      }
+      
+      return { name: category, icon, color };
+    });
+  };
+
+  const categories = getUniqueCategories();
+  
+  // Update stats when component mounts
+  useEffect(() => {
+    setStats({
+      cards: cardData.length,
+      transactions: transactionData.length,
+      categories: categories.length
+    });
+  }, []);
   
   // Function to handle Excel export (non-functional)
   const handleExportExcel = () => {
@@ -36,6 +98,11 @@ export default function ProfileScreen() {
         { text: "Yes", onPress: () => Alert.alert("Thank you!", "We'll notify you when this feature is available.") }
       ]
     );
+  };
+
+  // Function to navigate to Categories screen
+  const handleCategoriesPress = () => {
+    router.push("/screens/CategoriesScreen");
   };
   
   // Modal for currency selection
@@ -118,23 +185,21 @@ export default function ProfileScreen() {
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>10</Text>
+              <Text style={styles.statValue}>{stats.cards}</Text>
               <Text style={styles.statLabel}>Cards</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>145</Text>
+              <Text style={styles.statValue}>{stats.transactions}</Text>
               <Text style={styles.statLabel}>Transactions</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>4</Text>
+              <Text style={styles.statValue}>{stats.categories}</Text>
               <Text style={styles.statLabel}>Categories</Text>
             </View>
           </View>
           
           <View style={styles.profileOptions}>
-
-            
-            {/* NEW: Currency Selection Option */}
+            {/* Currency Selection Option */}
             <TouchableOpacity 
               style={styles.optionItem}
               onPress={() => setShowCurrencyModal(true)}
@@ -147,12 +212,15 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
             
-            {/* NEW: Categories Option */}
-            <TouchableOpacity style={styles.optionItem}>
+            {/* Categories Option - Now functional */}
+            <TouchableOpacity 
+              style={styles.optionItem}
+              onPress={handleCategoriesPress}
+            >
               <Ionicons name="pricetags-outline" size={24} color="#555" />
               <Text style={styles.optionText}>Categories</Text>
               <View style={styles.categoryCircles}>
-                {categories.map((category, index) => (
+                {categories.slice(0, 4).map((category, index) => (
                   <View 
                     key={index} 
                     style={[
@@ -161,11 +229,16 @@ export default function ProfileScreen() {
                     ]}
                   />
                 ))}
+                {categories.length > 4 && (
+                  <View style={[styles.categoryCircle, styles.moreIndicator]}>
+                    <Text style={styles.moreText}>+{categories.length - 4}</Text>
+                  </View>
+                )}
               </View>
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
             
-            {/* NEW: Export to Excel Option */}
+            {/* Export to Excel Option */}
             <TouchableOpacity 
               style={styles.optionItem}
               onPress={handleExportExcel}
@@ -193,8 +266,6 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
           </View>
-          
-
         </View>
       </View>
       
@@ -301,20 +372,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     color: "#333",
   },
-  logoutButton: {
-    backgroundColor: "#f8f8f8",
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  logoutText: {
-    fontSize: 16,
-    color: "#e74c3c",
-    fontWeight: "600",
-  },
-  // NEW: Currency Badge Styles
+  // Currency Badge Styles
   currencyBadge: {
     backgroundColor: "#e8f4fd",
     paddingHorizontal: 10,
@@ -327,7 +385,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
-  // NEW: Category Circles Styles
+  // Category Circles Styles
   categoryCircles: {
     flexDirection: "row",
     marginRight: 8,
@@ -339,7 +397,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
   },
-  // NEW: Currency Modal Styles
+  moreIndicator: {
+    backgroundColor: "#95a5a6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: -8,
+  },
+  moreText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  // Currency Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
