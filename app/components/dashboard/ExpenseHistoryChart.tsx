@@ -3,24 +3,33 @@ import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
 interface ExpenseHistoryChartProps {
-  data: number[];
+  expenseData: number[]; // Expenses (positive values)
+  incomeData?: number[]; // Income (positive values) 
   budget?: number;
   title?: string;
-  amount?: number;
-  timeSegment?: string; // Added timeSegment prop
+  totalExpense?: number;
+  totalIncome?: number;
+  timeSegment?: string;
 }
 
 export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({ 
-  data, 
+  expenseData, 
+  incomeData = [], 
   budget = 5000, 
   title,
-  amount = 0,
+  totalExpense = 0,
+  totalIncome = 0,
   timeSegment = "M" // Default to Month
 }) => {
   // Validate input data thoroughly
-  const validData = data?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
-  const validAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  const validExpenseData = expenseData?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
+  const validIncomeData = incomeData?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
+  const validTotalExpense = typeof totalExpense === 'number' && !isNaN(totalExpense) ? totalExpense : 0;
+  const validTotalIncome = typeof totalIncome === 'number' && !isNaN(totalIncome) ? totalIncome : 0;
   const validBudget = typeof budget === 'number' && !isNaN(budget) ? budget : 5000;
+  
+  // Calculate net amount (income - expense)
+  const netAmount = validTotalIncome - validTotalExpense;
   
   // Generate title based on timeSegment
   const getChartTitle = () => {
@@ -43,13 +52,13 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   };
   
   // Early return if no valid data
-  if (!validData || validData.length === 0) {
+  if ((validExpenseData.length === 0 && validIncomeData.length === 0)) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>{getChartTitle()}</Text>
         <Text style={styles.amount}>$0</Text>
         <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>No expense data for this period</Text>
+          <Text style={styles.noDataText}>No expense or income data for this period</Text>
         </View>
       </View>
     );
@@ -65,11 +74,9 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
   
-  // Ensure all data values are non-negative (floor at 0)
-  const nonNegativeData = validData.map(value => value < 0 ? 0 : value);
-  
   // Calculate max value for scaling (with fallback)
-  let maxValue = Math.max(...nonNegativeData, validBudget) * 1.1; // 10% headroom
+  const allValues = [...validExpenseData, ...validIncomeData];
+  let maxValue = Math.max(...allValues, validBudget) * 1.1; // 10% headroom
   if (!isFinite(maxValue) || maxValue <= 0) maxValue = 1000; // Fallback value if calculation fails
   
   // Get x-axis labels based on timeSegment
@@ -102,105 +109,93 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
 
   const xAxisLabels = getXAxisLabels();
   
-  // Determine the number of data points to display based on the time segment
-  const getDataPointsToShow = () => {
-    const dataLength = nonNegativeData.length;
-    if (dataLength <= 1) return nonNegativeData;
-    
-    // For different time segments, choose appropriate number of data points
-    switch(timeSegment) {
-      case "D": // Day - show all 24 hours or available data points
-        return nonNegativeData;
-      case "W": // Week - show all 7 days or available data points
-        return nonNegativeData;
-      case "M": // Month - sample based on days in month or available data
-        // If we have daily data for the month, show appropriate number of points
-        if (dataLength <= 31) return nonNegativeData;
-        // Otherwise sample to match our labels
-        return sampleDataPoints(nonNegativeData, 6);
-      case "6M": // 6 Months - show 6 data points (one per month)
-        return sampleDataPoints(nonNegativeData, 6);
-      case "Y": // Year - show 12 data points (one per month)
-        return sampleDataPoints(nonNegativeData, 12);
-      default:
-        return nonNegativeData;
+  // Function to create chart points 
+  const createChartPoints = (data: number[]) => {
+    // Ensure the data has at least 2 points for a line
+    if (data.length < 2) {
+      return [];
     }
+    
+    // Generate chart points with safety checks
+    return data.map((value, index) => {
+      // Ensure values are numbers and not NaN
+      const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+      const x = paddingLeft + (index / Math.max(data.length - 1, 1)) * chartWidth;
+      const y = paddingTop + chartHeight - (safeValue / maxValue) * chartHeight;
+      return { x, y };
+    });
   };
   
-  // Function to sample data points to match desired number of points
-  const sampleDataPoints = (data: number[], numPoints: number) => {
-    if (data.length <= numPoints) return data;
+  // Generate points for both lines
+  const expensePoints = createChartPoints(validExpenseData);
+  const incomePoints = createChartPoints(validIncomeData);
+  
+  // Generate paths for the lines
+  const createLinePath = (points: { x: number, y: number }[]) => {
+    if (points.length < 2) return "";
     
-    const result = [];
-    const step = data.length / numPoints;
-    
-    for (let i = 0; i < numPoints; i++) {
-      const index = Math.min(Math.floor(i * step), data.length - 1);
-      result.push(data[index]);
-    }
-    
-    // Always include the last data point for continuity
-    if (numPoints > 0 && result.length > 0) {
-      result[result.length - 1] = data[data.length - 1];
-    }
-    
-    return result;
+    return points.map((point, i) => 
+      i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
+    ).join(' ');
   };
   
-  // Get the data points to show in the chart
-  const dataPointsToShow = getDataPointsToShow();
+  const expenseLinePath = createLinePath(expensePoints);
+  const incomeLinePath = createLinePath(incomePoints);
   
-  // Generate chart points with safety checks
-  const points = dataPointsToShow.map((value, index) => {
-    // Ensure values are numbers and not NaN or negative
-    const safeValue = typeof value === 'number' && !isNaN(value) ? Math.max(0, value) : 0;
-    const x = paddingLeft + (index / Math.max(dataPointsToShow.length - 1, 1)) * chartWidth;
-    const y = paddingTop + chartHeight - (safeValue / maxValue) * chartHeight;
-    return { x, y };
-  });
+  // Generate area below the expense line for gradient fill
+  const createAreaPath = (points: { x: number, y: number }[]) => {
+    if (points.length < 2) return "";
+    
+    return `${createLinePath(points)} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`;
+  };
   
-  // Safety check for valid points
-  if (points.length < 2) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{getChartTitle()}</Text>
-        <Text style={styles.amount}>${validAmount < 0 ? 0 : validAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
-        <View style={styles.noDataContainer}>
-          <Text style={styles.noDataText}>Insufficient data points for chart</Text>
-        </View>
-      </View>
-    );
-  }
-  
-  // Generate path for the line
-  const linePath = points.map((point, i) => 
-    i === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`
-  ).join(' ');
-  
-  // Generate area below the line for gradient fill
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`;
+  const expenseAreaPath = createAreaPath(expensePoints);
+  const incomeAreaPath = createAreaPath(incomePoints);
 
-  // Safe formatter for currency - show positive values only
+  // Safe formatter for currency
   const formatCurrency = (value: number): string => {
     if (typeof value !== 'number' || isNaN(value)) return "$0";
-    // Ensure value is non-negative
-    const nonNegativeValue = Math.max(0, value);
-    return "$" + nonNegativeValue.toLocaleString('en-US', { 
+    
+    const isNegative = value < 0;
+    const formattedValue = "$" + Math.abs(value).toLocaleString('en-US', { 
       minimumFractionDigits: 0, 
       maximumFractionDigits: 0 
     });
+    
+    return isNegative ? `-${formattedValue}` : formattedValue;
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{getChartTitle()}</Text>
-      <Text style={styles.amount}>{formatCurrency(validAmount)}</Text>
+      <Text style={[
+        styles.amount, 
+        netAmount < 0 ? styles.negativeAmount : styles.positiveAmount
+      ]}>
+        {netAmount < 0 ? '-' : ''}{formatCurrency(Math.abs(netAmount))}
+      </Text>
+      
+      {/* Legend */}
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#E74C3C' }]} />
+          <Text style={styles.legendText}>Expenses: {formatCurrency(validTotalExpense)}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#2ECC71' }]} />
+          <Text style={styles.legendText}>Income: {formatCurrency(validTotalIncome)}</Text>
+        </View>
+      </View>
       
       <Svg width={width} height={height}>
         <Defs>
-          <LinearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#9C56E8" stopOpacity={0.3} />
-            <Stop offset="1" stopColor="#9C56E8" stopOpacity={0} />
+          <LinearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#E74C3C" stopOpacity={0.3} />
+            <Stop offset="1" stopColor="#E74C3C" stopOpacity={0} />
+          </LinearGradient>
+          <LinearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#2ECC71" stopOpacity={0.3} />
+            <Stop offset="1" stopColor="#2ECC71" stopOpacity={0} />
           </LinearGradient>
         </Defs>
         
@@ -214,29 +209,62 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
           strokeWidth={1} 
         />
         
-        {/* Area fill with gradient */}
-        <Path
-          d={areaPath}
-          fill="url(#areaGradient)"
-        />
+        {/* Area fills with gradients */}
+        {expensePoints.length >= 2 && (
+          <Path
+            d={expenseAreaPath}
+            fill="url(#expenseGradient)"
+          />
+        )}
         
-        {/* Main line */}
-        <Path
-          d={linePath}
-          stroke="#9C56E8"
-          strokeWidth={3}
-          fill="none"
-        />
+        {incomePoints.length >= 2 && (
+          <Path
+            d={incomeAreaPath}
+            fill="url(#incomeGradient)"
+          />
+        )}
         
-        {/* Last point with dot */}
-        <Circle
-          cx={points[points.length - 1].x}
-          cy={points[points.length - 1].y}
-          r={6}
-          fill="#9C56E8"
-          stroke="white"
-          strokeWidth={2}
-        />
+        {/* Main lines */}
+        {expensePoints.length >= 2 && (
+          <Path
+            d={expenseLinePath}
+            stroke="#E74C3C"
+            strokeWidth={3}
+            fill="none"
+          />
+        )}
+        
+        {incomePoints.length >= 2 && (
+          <Path
+            d={incomeLinePath}
+            stroke="#2ECC71"
+            strokeWidth={3}
+            fill="none"
+          />
+        )}
+        
+        {/* Last points with dots */}
+        {expensePoints.length >= 2 && (
+          <Circle
+            cx={expensePoints[expensePoints.length - 1].x}
+            cy={expensePoints[expensePoints.length - 1].y}
+            r={6}
+            fill="#E74C3C"
+            stroke="white"
+            strokeWidth={2}
+          />
+        )}
+        
+        {incomePoints.length >= 2 && (
+          <Circle
+            cx={incomePoints[incomePoints.length - 1].x}
+            cy={incomePoints[incomePoints.length - 1].y}
+            r={6}
+            fill="#2ECC71"
+            stroke="white"
+            strokeWidth={2}
+          />
+        )}
         
         {/* X-axis labels */}
         {xAxisLabels.map((label, index) => {
@@ -283,7 +311,13 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 36,
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: 8,
+  },
+  positiveAmount: {
+    color: '#2ECC71', // Green for positive (income > expense)
+  },
+  negativeAmount: {
+    color: '#E74C3C', // Red for negative (expense > income)
   },
   noDataContainer: {
     height: 120,
@@ -294,6 +328,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#666666',
   }
 });
 

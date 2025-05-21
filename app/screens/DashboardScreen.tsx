@@ -4,9 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import CardFilterDropdown from "../components/dashboard/CardFilterDropdown"; // Import the new component
-
 import BudgetBarChart from "../components/dashboard/BudgetBarChart";
+import CardFilterDropdown from "../components/dashboard/CardFilterDropdown";
 import { DonutChart } from "../components/dashboard/DonutChart";
 import { getCategoryIcon, SEGMENTS } from "../components/dashboard/DonutUtils";
 import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
@@ -34,7 +33,13 @@ export default function DashboardScreen() {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null); // New state for card selection
   const [currentPeriod, setCurrentPeriod] = useState(new Date());
   const [categories, setCategories] = useState<{name: string, amount: number, color: string}[]>([]);
+  
+  // Updated state for expense and income tracking
   const [expenseHistory, setExpenseHistory] = useState<number[]>([]);
+  const [incomeHistory, setIncomeHistory] = useState<number[]>([]);
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
+  
   const [totalSpent, setTotalSpent] = useState(0);
   const [budgetCategories, setBudgetCategories] = useState<{
     name: string;
@@ -124,8 +129,11 @@ export default function DashboardScreen() {
     } else {
       // Reset charts if no data
       setTotalSpent(0);
+      setTotalExpense(0);
+      setTotalIncome(0);
       setCategories([]);
       setExpenseHistory([]);
+      setIncomeHistory([]);
       setBudgetCategories([]);
     }
   }, [filteredTransactions]);
@@ -181,58 +189,99 @@ export default function DashboardScreen() {
     const segmentType = SEGMENTS[selectedSegment];
     const now = new Date(currentPeriod);
     
-    // Initialize appropriate data structure based on segment type
-    let chartData: number[] = [];
+    // Initialize structures for both expense and income data
+    let expenseData: number[] = [];
+    let incomeData: number[] = [];
+    let totalExpenseAmount = 0;
+    let totalIncomeAmount = 0;
+    
+    // Function to determine if transaction is expense or income
+    // Note: In this example, we're assuming positive mount values are expenses
+    // and negative mount values are income. Adjust this logic if your data is different.
+    const isExpense = (mount: number) => mount >= 0;
     
     switch(segmentType) {
       case "D": // Day - hourly data (24 hours)
         // Initialize with zeros for each hour (0-23)
-        chartData = Array(24).fill(0);
+        expenseData = Array(24).fill(0);
+        incomeData = Array(24).fill(0);
         
-        // Sum transactions by hour for the current day
+        // Process transactions by hour for the current day
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           // Check if transaction is from the selected day
           if (date.getDate() === now.getDate() && 
               date.getMonth() === now.getMonth() && 
               date.getFullYear() === now.getFullYear()) {
+            
             const hour = date.getHours();
-            chartData[hour] += transaction.mount;
+            const mount = Math.abs(transaction.mount); // Use absolute value for calculations
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[hour] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[hour] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        // Calculate cumulative sums for running total
-        let runningDayTotal = 0;
-        chartData = chartData.map(amount => {
-          runningDayTotal += amount;
-          return runningDayTotal;
+        // Calculate cumulative sums for each dataset
+        let runningExpenseTotal = 0;
+        let runningIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          runningExpenseTotal += amount;
+          return runningExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          runningIncomeTotal += amount;
+          return runningIncomeTotal;
         });
         break;
         
       case "W": // Week - daily data (7 days)
         // Initialize with zeros for each day of the week (0-6, Sunday-Saturday)
-        chartData = Array(7).fill(0);
+        expenseData = Array(7).fill(0);
+        incomeData = Array(7).fill(0);
         
         // Get the start of the week (Sunday)
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - now.getDay());
         
-        // Sum transactions by day for the current week
+        // Process transactions by day for the current week
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           // Check if transaction is within the selected week
           const dayDiff = Math.floor((date.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
           if (dayDiff >= 0 && dayDiff < 7) {
             const dayOfWeek = date.getDay();
-            chartData[dayOfWeek] += transaction.mount;
+            const mount = Math.abs(transaction.mount);
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[dayOfWeek] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[dayOfWeek] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        // Calculate cumulative sums for running total
-        let runningWeekTotal = 0;
-        chartData = chartData.map(amount => {
-          runningWeekTotal += amount;
-          return runningWeekTotal;
+        // Calculate cumulative sums
+        let runningWeekExpenseTotal = 0;
+        let runningWeekIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          runningWeekExpenseTotal += amount;
+          return runningWeekExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          runningWeekIncomeTotal += amount;
+          return runningWeekIncomeTotal;
         });
         break;
         
@@ -241,30 +290,47 @@ export default function DashboardScreen() {
         const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
         
         // Initialize with zeros for each day
-        chartData = Array(daysInMonth).fill(0);
+        expenseData = Array(daysInMonth).fill(0);
+        incomeData = Array(daysInMonth).fill(0);
         
-        // Sum transactions by day for the current month
+        // Process transactions by day for the current month
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           // Check if transaction is from the selected month
           if (date.getMonth() === now.getMonth() && 
               date.getFullYear() === now.getFullYear()) {
             const day = date.getDate() - 1; // 0-indexed
-            chartData[day] += transaction.mount;
+            const mount = Math.abs(transaction.mount);
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[day] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[day] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        // Calculate cumulative sums for running total
-        let runningMonthTotal = 0;
-        chartData = chartData.map(amount => {
-          runningMonthTotal += amount;
-          return runningMonthTotal;
+        // Calculate cumulative sums
+        let runningMonthExpenseTotal = 0;
+        let runningMonthIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          runningMonthExpenseTotal += amount;
+          return runningMonthExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          runningMonthIncomeTotal += amount;
+          return runningMonthIncomeTotal;
         });
         break;
         
       case "6M": // 6 Months - monthly data (6 months)
         // Initialize with zeros for each month (0-5)
-        chartData = Array(6).fill(0);
+        expenseData = Array(6).fill(0);
+        incomeData = Array(6).fill(0);
         
         // Calculate start month (5 months before current)
         const sixMonthsAgo = new Date(now);
@@ -272,7 +338,7 @@ export default function DashboardScreen() {
         const startMonth = sixMonthsAgo.getMonth();
         const startYear = sixMonthsAgo.getFullYear();
         
-        // Sum transactions by month for the last 6 months
+        // Process transactions by month for the last 6 months
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           const transYear = date.getFullYear();
@@ -282,63 +348,114 @@ export default function DashboardScreen() {
           const monthDiff = (transYear - startYear) * 12 + (transMonth - startMonth);
           
           if (monthDiff >= 0 && monthDiff < 6) {
-            chartData[monthDiff] += transaction.mount;
+            const mount = Math.abs(transaction.mount);
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[monthDiff] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[monthDiff] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        // Calculate cumulative sums for running total
-        let runningSixMonthTotal = 0;
-        chartData = chartData.map(amount => {
-          runningSixMonthTotal += amount;
-          return runningSixMonthTotal;
+        // Calculate cumulative sums
+        let runningSixMonthExpenseTotal = 0;
+        let runningSixMonthIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          runningSixMonthExpenseTotal += amount;
+          return runningSixMonthExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          runningSixMonthIncomeTotal += amount;
+          return runningSixMonthIncomeTotal;
         });
         break;
         
       case "Y": // Year - monthly data (12 months)
         // Initialize with zeros for each month (0-11)
-        chartData = Array(12).fill(0);
+        expenseData = Array(12).fill(0);
+        incomeData = Array(12).fill(0);
         
-        // Sum transactions by month for the current year
+        // Process transactions by month for the current year
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           // Check if transaction is from the selected year
           if (date.getFullYear() === now.getFullYear()) {
             const month = date.getMonth();
-            chartData[month] += transaction.mount;
+            const mount = Math.abs(transaction.mount);
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[month] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[month] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        // Calculate cumulative sums for running total
-        let runningYearTotal = 0;
-        chartData = chartData.map(amount => {
-          runningYearTotal += amount;
-          return runningYearTotal;
+        // Calculate cumulative sums
+        let runningYearExpenseTotal = 0;
+        let runningYearIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          runningYearExpenseTotal += amount;
+          return runningYearExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          runningYearIncomeTotal += amount;
+          return runningYearIncomeTotal;
         });
         break;
         
       default:
         // Fallback to month view if segment is not recognized
         const defaultDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        chartData = Array(defaultDaysInMonth).fill(0);
+        expenseData = Array(defaultDaysInMonth).fill(0);
+        incomeData = Array(defaultDaysInMonth).fill(0);
         
         sortedTransactions.forEach(transaction => {
           const date = new Date(transaction.date);
           if (date.getMonth() === now.getMonth() && 
               date.getFullYear() === now.getFullYear()) {
             const day = date.getDate() - 1;
-            chartData[day] += transaction.mount;
+            const mount = Math.abs(transaction.mount);
+            
+            if (isExpense(transaction.mount)) {
+              expenseData[day] += mount;
+              totalExpenseAmount += mount;
+            } else {
+              incomeData[day] += mount;
+              totalIncomeAmount += mount;
+            }
           }
         });
         
-        let defaultRunningTotal = 0;
-        chartData = chartData.map(amount => {
-          defaultRunningTotal += amount;
-          return defaultRunningTotal;
+        let defaultRunningExpenseTotal = 0;
+        let defaultRunningIncomeTotal = 0;
+        
+        expenseData = expenseData.map(amount => {
+          defaultRunningExpenseTotal += amount;
+          return defaultRunningExpenseTotal;
+        });
+        
+        incomeData = incomeData.map(amount => {
+          defaultRunningIncomeTotal += amount;
+          return defaultRunningIncomeTotal;
         });
         break;
     }
     
-    setExpenseHistory(chartData);
+    // Update state with processed data
+    setExpenseHistory(expenseData);
+    setIncomeHistory(incomeData);
+    setTotalExpense(totalExpenseAmount);
+    setTotalIncome(totalIncomeAmount);
   };
 
   // Process budget data for BudgetBarChart
@@ -524,13 +641,15 @@ export default function DashboardScreen() {
           </View>
         )}
         
-        {/* Expense History Chart */}
-        {expenseHistory.length > 0 ? (
+        {/* Expense History Chart - Updated to use dual-line chart */}
+        {(expenseHistory.length > 0 || incomeHistory.length > 0) ? (
           <ExpenseHistoryChart 
-            data={expenseHistory} 
-            amount={totalSpent} 
-            budget={totalBudget} 
-            timeSegment={SEGMENTS[selectedSegment]} // Pass the current segment
+            expenseData={expenseHistory} 
+            incomeData={incomeHistory}
+            totalExpense={totalExpense}
+            totalIncome={totalIncome}
+            budget={totalBudget}
+            timeSegment={SEGMENTS[selectedSegment]}
           />
         ) : (
           <View style={[styles.donutChartContainer, { marginTop: 16 }]}>
