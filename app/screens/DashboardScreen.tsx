@@ -4,14 +4,22 @@ import React, { useEffect, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import { DonutChart } from "../components/dashboard/DonutChart";
-import { transactionData } from "../data/sampleData";
 
+
+import BudgetBarChart from "../components/dashboard/BudgetBarChart";
+
+
+import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
+
+import { DonutChart } from "../components/dashboard/DonutChart";
+
+
+import { transactionData } from "../data/sampleData";
 
 import { MONTHS, SEGMENTS, getCategoryIcon } from "../components/dashboard/DonutUtils";
 
-
 import { styles } from "../styles/DashboardScreenStyles";
+
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -21,6 +29,39 @@ export default function DashboardScreen() {
   const [selectedFilter, setSelectedFilter] = useState("Debit");
   const [currentPeriod, setCurrentPeriod] = useState(new Date());
   const [categories, setCategories] = useState<{name: string, amount: number, color: string}[]>([]);
+  
+  // Sample data for the expense history chart
+  const expenseHistoryData = [
+    1200, 1250, 1300, 1280, 1350, 1400, 1450, 
+    1500, 1520, 1580, 1600, 1650, 1700, 1750, 
+    1850, 1900, 2000, 2100, 2200, 2300, 2400, 
+    2500, 2700, 3000, 3500, 4000, 4466
+  ];
+  
+  // Sample data for budget categories
+  const budgetCategories = [
+    {
+      name: "Clothing & Shoes",
+      spent: 145741,
+      budget: 240000,
+      icon: "shirt-outline",
+      color: "#4CAF50"
+    },
+    {
+      name: "Eating Out",
+      spent: 118238,
+      budget: 140000,
+      icon: "restaurant-outline",
+      color: "#2196F3"
+    },
+    {
+      name: "Entertainment",
+      spent: 84349,
+      budget: 190000,
+      icon: "game-controller-outline",
+      color: "#F44336"
+    }
+  ];
 
   useEffect(() => {
     // Get current date/month for the time period display
@@ -203,6 +244,16 @@ export default function DashboardScreen() {
 
         {/* Donut Chart */}
         <DonutChart categories={categories} />
+        
+        {/* Expense History Chart */}
+        <ExpenseHistoryChart data={expenseHistoryData} amount={4466} budget={5000} />
+        
+        {/* Budget Bar Chart */}
+        <BudgetBarChart
+          categories={budgetCategories}
+          totalSpent={1509376}
+          totalBudget={2800000}
+        />
 
         {/* Categories Tabs */}
         <View style={styles.categoriesTabContainer}>
