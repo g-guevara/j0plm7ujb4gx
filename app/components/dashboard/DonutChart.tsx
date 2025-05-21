@@ -29,7 +29,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
     typeof cat.name === 'string' && 
     cat.name.trim() !== '' &&
     typeof cat.amount === 'number' && 
-    !isNaN(cat.amount)
+    !isNaN(cat.amount) &&
+    cat.amount > 0  // Only include positive values
   ) || [];
   
   // If no valid categories, show "no data" message
@@ -48,58 +49,130 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
   const radius = (size - strokeWidth) / 2;
   const center = size / 2;
   
-  // Pre-defined colors that match the reference image
-  const pillColors = [
+  // Calculate total amount
+  const totalAmount = validCategories.reduce((sum, category) => sum + category.amount, 0);
+  
+  // Pre-defined colors for the segments if color is not provided
+  const defaultColors = [
     "#9c56e8", // Purple
     "#4a9bea", // Blue
     "#f27ab1", // Pink
     "#f8a427", // Orange
-    "#4a9bea", // Blue
+    "#2ecc71", // Green
+    "#e74c3c", // Red
+    "#34495e"  // Dark blue
   ];
   
-  // Define pill-shaped segments with their positions - positioned to avoid overlap
-  const renderPillSegments = () => {
-    const segments: React.ReactNode[] = [];
+  // Create separate segments with fixed gaps between them
+  const createSegments = () => {
+    // The fixed gap in degrees between segments
+    const gapAngleDegrees = 12;
     
-    // Define the glow filter ID for each color
-    const glowFilterIds = pillColors.map((color, i) => `glow-${i}`);
+    // Sort categories by amount (descending) for better visual display
+    const sortedCategories = [...validCategories].sort((a, b) => b.amount - a.amount);
     
-    // Each segment is defined by starting and ending angle and a length
-    // Angles are in degrees, where 0 is at the top and angle increases clockwise
-    const segmentDefinitions = [
-      { startAngle: -10, length: 60, color: pillColors[0], glowColor: "#9c56e8", glowId: glowFilterIds[0] },  // Purple top-left
-      { startAngle: 70, length: 60, color: pillColors[1], glowColor: "#4a9bea", glowId: glowFilterIds[1] },   // Blue top-right
-      { startAngle: 150, length: 45, color: pillColors[2], glowColor: "#f27ab1", glowId: glowFilterIds[2] },  // Pink right
-      { startAngle: 215, length: 50, color: pillColors[3], glowColor: "#f8a427", glowId: glowFilterIds[3] },  // Orange bottom-right
-      { startAngle: 285, length: 60, color: pillColors[1], glowColor: "#4a9bea", glowId: glowFilterIds[4] },  // Blue bottom-left
-    ];
+    // Calculate adjusted angles to account for gaps
+    const totalGapAngle = gapAngleDegrees * sortedCategories.length;
+    const availableAngle = 360 - totalGapAngle;
     
-    // Create the pill segments
-    segmentDefinitions.forEach((segment, index) => {
-      const startAngleDeg = segment.startAngle;
-      const endAngleDeg = startAngleDeg + segment.length;
+    let segments = [];
+    let startAngle = -90 - (gapAngleDegrees / 2); // Start at top, offset by half a gap
+    
+    for (let i = 0; i < sortedCategories.length; i++) {
+      const category = sortedCategories[i];
+      const proportion = category.amount / totalAmount;
+      const segmentAngle = proportion * availableAngle;
+      const color = category.color || defaultColors[i % defaultColors.length];
       
-      // Convert to radians
-      const startAngle = (startAngleDeg * Math.PI) / 180;
-      const endAngle = (endAngleDeg * Math.PI) / 180;
+      // Add gap by advancing the start angle
+      startAngle += gapAngleDegrees / 2;
       
-      segments.push(
-        <Path
-          key={`segment-${index}`}
-          d={`
-            M ${center + radius * Math.cos(startAngle)} ${center + radius * Math.sin(startAngle)}
-            A ${radius} ${radius} 0 0 1 ${center + radius * Math.cos(endAngle)} ${center + radius * Math.sin(endAngle)}
-          `}
-          stroke={segment.color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          fill="transparent"
-          filter={`url(#${segment.glowId})`}
-        />
-      );
-    });
+      // Create segment
+      segments.push({
+        category,
+        startAngle: startAngle,
+        endAngle: startAngle + segmentAngle,
+        color
+      });
+      
+      // Advance to next segment position (adding half gap at the end)
+      startAngle += segmentAngle + (gapAngleDegrees / 2);
+    }
     
     return segments;
+  };
+  
+  const segments = createSegments();
+
+  // Define the glow filter IDs
+  const glowFilterIds = segments.map((_, i) => `glow-${i}`);
+  
+  // Render all segments
+  const renderSegments = () => {
+    return segments.map((segment, index) => {
+      // Convert to radians
+      const startRad = (segment.startAngle * Math.PI) / 180;
+      const endRad = (segment.endAngle * Math.PI) / 180;
+      
+      // The angular span in degrees
+      const spanDegrees = segment.endAngle - segment.startAngle;
+      
+      // For larger segments (>120 degrees), split into smaller arcs for better visual
+      if (spanDegrees > 120) {
+        const numArcs = Math.ceil(spanDegrees / 60);
+        const arcs = [];
+        
+        for (let i = 0; i < numArcs; i++) {
+          const arcStartDegree = segment.startAngle + (i * spanDegrees / numArcs);
+          const arcEndDegree = segment.startAngle + ((i + 1) * spanDegrees / numArcs);
+          
+          // Subtract 1 degree from end of each sub-arc to create mini-gaps
+          const adjustedEndDegree = i < numArcs - 1 
+            ? arcEndDegree - 1 
+            : arcEndDegree;
+            
+          const arcStartRad = (arcStartDegree * Math.PI) / 180;
+          const arcEndRad = (adjustedEndDegree * Math.PI) / 180;
+          
+          // Determine if we need the large-arc-flag
+          const largeArcFlag = (adjustedEndDegree - arcStartDegree) > 180 ? 1 : 0;
+          
+          arcs.push(
+            <Path
+              key={`arc-${index}-${i}`}
+              d={`
+                M ${center + radius * Math.cos(arcStartRad)} ${center + radius * Math.sin(arcStartRad)}
+                A ${radius} ${radius} 0 ${largeArcFlag} 1 ${center + radius * Math.cos(arcEndRad)} ${center + radius * Math.sin(arcEndRad)}
+              `}
+              stroke={segment.color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              fill="transparent"
+              filter={`url(#${glowFilterIds[index]})`}
+            />
+          );
+        }
+        return arcs;
+      } else {
+        // Determine if we need the large-arc-flag
+        const largeArcFlag = spanDegrees > 180 ? 1 : 0;
+        
+        return (
+          <Path
+            key={`segment-${index}`}
+            d={`
+              M ${center + radius * Math.cos(startRad)} ${center + radius * Math.sin(startRad)}
+              A ${radius} ${radius} 0 ${largeArcFlag} 1 ${center + radius * Math.cos(endRad)} ${center + radius * Math.sin(endRad)}
+            `}
+            stroke={segment.color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            fill="transparent"
+            filter={`url(#${glowFilterIds[index]})`}
+          />
+        );
+      }
+    });
   };
 
   // Get the main category (highest spending)
@@ -127,67 +200,20 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
       {/* Donut Chart Part */}
       <View style={styles.chartSection}>
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          {/* Define glow filters for each color */}
+          {/* Define glow filters for each segment */}
           <Defs>
-            {/* Purple glow filter */}
-            <Filter id="glow-0" x="-50%" y="-50%" width="200%" height="200%">
-              <FeGaussianBlur stdDeviation="3" result="blur" />
-              <FeColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.612 0 0 0 0 0.337 0 0 0 0 0.91 0 0 0 1 0"
-                result="glow"
-              />
-              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-            </Filter>
-            
-            {/* Blue glow filter */}
-            <Filter id="glow-1" x="-50%" y="-50%" width="200%" height="200%">
-              <FeGaussianBlur stdDeviation="3" result="blur" />
-              <FeColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
-                result="glow"
-              />
-              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-            </Filter>
-            
-            {/* Pink glow filter */}
-            <Filter id="glow-2" x="-50%" y="-50%" width="200%" height="200%">
-              <FeGaussianBlur stdDeviation="3" result="blur" />
-              <FeColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.949 0 0 0 0 0.478 0 0 0 0 0.694 0 0 0 1 0"
-                result="glow"
-              />
-              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-            </Filter>
-            
-            {/* Orange glow filter */}
-            <Filter id="glow-3" x="-50%" y="-50%" width="200%" height="200%">
-              <FeGaussianBlur stdDeviation="4" result="blur" />
-              <FeColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.973 0 0 0 0 0.643 0 0 0 0 0.153 0 0 0 1 0"
-                result="glow"
-              />
-              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-            </Filter>
-            
-            {/* Blue glow filter (bottom) */}
-            <Filter id="glow-4" x="-50%" y="-50%" width="200%" height="200%">
-              <FeGaussianBlur stdDeviation="3" result="blur" />
-              <FeColorMatrix
-                in="blur"
-                type="matrix"
-                values="0 0 0 0 0.29 0 0 0 0 0.608 0 0 0 0 0.918 0 0 0 1 0"
-                result="glow"
-              />
-              <FeComposite in="SourceGraphic" in2="glow" operator="over" />
-            </Filter>
+            {segments.map((segment, index) => (
+              <Filter id={glowFilterIds[index]} key={`filter-${index}`} x="-50%" y="-50%" width="200%" height="200%">
+                <FeGaussianBlur stdDeviation="3" result="blur" />
+                <FeColorMatrix
+                  in="blur"
+                  type="matrix"
+                  values="0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.8 0 0 0 1 0"
+                  result="glow"
+                />
+                <FeComposite in="SourceGraphic" in2="glow" operator="over" />
+              </Filter>
+            ))}
           </Defs>
           
           {/* Background circle */}
@@ -195,20 +221,20 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
             cx={center}
             cy={center}
             r={radius}
-            stroke="#f2f2f2"
+            stroke="#fff"
             strokeWidth={strokeWidth}
             fill="transparent"
           />
           
-          {/* Render all pill segments */}
+          {/* Render all segments */}
           <G>
-            {renderPillSegments()}
+            {renderSegments()}
           </G>
         </Svg>
         
         {/* Center content */}
         <View style={styles.donutChartCenter}>
-          <View style={[styles.categoryIcon, { backgroundColor: mainCategory.color }]}>
+          <View style={[styles.categoryIcon, { backgroundColor: mainCategory.color || defaultColors[0] }]}>
             <Ionicons 
               name={getCategoryIcon(mainCategory.name)}
               size={22} 
@@ -239,7 +265,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
         {validCategories.slice(0, 4).map((category, index) => (
           <View key={index} style={styles.categoryItem}>
             <View style={styles.categoryLeft}>
-              <View style={[styles.categoryIndicator, { backgroundColor: category.color }]}>
+              <View style={[styles.categoryIndicator, { backgroundColor: category.color || defaultColors[index % defaultColors.length] }]}>
                 <Ionicons 
                   name={getCategoryIcon(category.name)} 
                   size={18} 
