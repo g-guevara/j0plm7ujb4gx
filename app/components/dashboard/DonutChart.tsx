@@ -51,7 +51,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
   const size = Dimensions.get("window").width * 0.7;
   const strokeWidth = 18;
-  const radius = (size - strokeWidth) / 2;
+  const padding = strokeWidth; // Add padding equal to stroke width
+  const radius = (size - strokeWidth - padding) / 2;
   const center = size / 2;
   
   // Calculate total amount
@@ -212,7 +213,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
     <View style={styles.container}>
       {/* Donut Chart Part */}
       <View style={styles.chartSection}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible' }}>
           {/* Define glow filters for each segment */}
           <Defs>
             {segments.map((segment, index) => (
