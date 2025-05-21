@@ -20,9 +20,14 @@ interface DonutChartProps {
     amount: number;
     color: string;
   }[];
+  // New prop to set the minimum percentage threshold (default 2%)
+  minPercentThreshold?: number;
 }
 
-export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
+export const DonutChart: React.FC<DonutChartProps> = ({ 
+  categories,
+  minPercentThreshold = 2 
+}) => {
   // Early validation - check if categories exist and have valid data
   const validCategories = categories?.filter(cat => 
     cat && 
@@ -71,15 +76,23 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
     // Sort categories by amount (descending) for better visual display
     const sortedCategories = [...validCategories].sort((a, b) => b.amount - a.amount);
     
+    // Filter out categories below threshold (just hide them completely)
+    const filteredCategories = sortedCategories.filter(category => {
+      const proportion = category.amount / totalAmount;
+      const percentageOfTotal = proportion * 100;
+      return percentageOfTotal >= minPercentThreshold;
+    });
+    
     // Calculate adjusted angles to account for gaps
-    const totalGapAngle = gapAngleDegrees * sortedCategories.length;
+    const totalGapAngle = gapAngleDegrees * filteredCategories.length;
     const availableAngle = 360 - totalGapAngle;
     
     let segments = [];
     let startAngle = -90 - (gapAngleDegrees / 2); // Start at top, offset by half a gap
     
-    for (let i = 0; i < sortedCategories.length; i++) {
-      const category = sortedCategories[i];
+    // Process only the filtered categories
+    for (let i = 0; i < filteredCategories.length; i++) {
+      const category = filteredCategories[i];
       const proportion = category.amount / totalAmount;
       const segmentAngle = proportion * availableAngle;
       const color = category.color || defaultColors[i % defaultColors.length];
