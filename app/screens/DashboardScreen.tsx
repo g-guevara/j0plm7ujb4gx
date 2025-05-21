@@ -12,21 +12,6 @@ import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
 import { Transaction, transactionData } from "../data/sampleData";
 import { styles } from "../styles/DashboardScreenStyles";
 
-// Define budget values for categories (we'll use these since we don't have actual budget data)
-const CATEGORY_BUDGETS: Record<string, number> = {
-  "Groceries": 240000,
-  "Rent": 600000,
-  "Bills": 190000,
-  "Entertainment": 120000,
-  "Transportation": 140000,
-  "Dining": 150000,
-  "Shopping": 200000,
-  "Healthcare": 100000,
-};
-
-// Default budget for categories without specific budget
-const DEFAULT_BUDGET = 100000;
-
 export default function DashboardScreen() {
   const router = useRouter();
   const [selectedSegment, setSelectedSegment] = useState(2); // M (Month) selected by default
@@ -473,8 +458,8 @@ export default function DashboardScreen() {
       .map(([name, spent], index) => {
         // Get appropriate icon for the category
         const iconName = getCategoryIcon(name);
-        // Get budget for this category (or use default)
-        const budget = CATEGORY_BUDGETS[name] || DEFAULT_BUDGET;
+        // Get default budget value (the BudgetBarChart component will handle actual budget values)
+        const budget = 100000; // default value, will be overridden by the component
         // Get color from the category colors array
         const colorIndex = index % categoryColors.length;
         
@@ -557,9 +542,6 @@ export default function DashboardScreen() {
   const handleCardSelect = (cardId: number) => {
     setSelectedCardId(cardId);
   };
-
-  // Calculate total budget across all categories
-  const totalBudget = budgetCategories.reduce((sum, category) => sum + category.budget, 0);
 
   return (
     <View style={styles.mainContainer}>
@@ -648,7 +630,6 @@ export default function DashboardScreen() {
             incomeData={incomeHistory}
             totalExpense={totalExpense}
             totalIncome={totalIncome}
-            budget={totalBudget}
             timeSegment={SEGMENTS[selectedSegment]}
           />
         ) : (
@@ -662,7 +643,6 @@ export default function DashboardScreen() {
           <BudgetBarChart
             categories={budgetCategories}
             totalSpent={totalSpent}
-            totalBudget={totalBudget}
           />
         ) : (
           <View style={[styles.donutChartContainer, { marginTop: 16, marginBottom: 16 }]}>

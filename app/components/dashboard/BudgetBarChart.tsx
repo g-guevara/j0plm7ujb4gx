@@ -1,6 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import BudgetDialog from './BudgetDialog';
+
+// Default budget value (only used when no budget is set)
+const DEFAULT_BUDGET = 100000;
 
 interface CategoryBudget {
   name: string;
@@ -18,9 +22,39 @@ interface BudgetBarChartProps {
 
 export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({ 
   categories, 
-  totalSpent, 
-  totalBudget
+  totalSpent
 }) => {
+  // Local state for budget management
+  const [showBudgetDialog, setShowBudgetDialog] = useState(false);
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
+  const [usePercentageBudget, setUsePercentageBudget] = useState(false);
+  const [totalBudget, setTotalBudget] = useState(1500000); // Default $1.5M total budget
+  
+  // Save budget changes from the dialog
+  const handleSaveBudget = (
+    budgetItems: Array<{name: string; budget: number; percentage?: number; color: string; icon: string}>,
+    usePercentage: boolean,
+    newTotalBudget: number
+  ) => {
+    // Update the total budget
+    setTotalBudget(newTotalBudget);
+    
+    // Update the use percentage flag
+    setUsePercentageBudget(usePercentage);
+    
+    // Convert budget items to budget object
+    const newBudgets: Record<string, number> = {};
+    budgetItems.forEach(item => {
+      newBudgets[item.name] = item.budget;
+    });
+    
+    // Update the category budgets
+    setCategoryBudgets(newBudgets);
+    
+    // Close the dialog
+    setShowBudgetDialog(false);
+  };
+
   // Validate data thoroughly
   const validCategories = categories?.filter(cat => 
     cat && 
@@ -34,18 +68,31 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
   
   // Validate total values
   const validTotalSpent = typeof totalSpent === 'number' && !isNaN(totalSpent) ? totalSpent : 0;
-  const validTotalBudget = typeof totalBudget === 'number' && !isNaN(totalBudget) ? totalBudget : 0;
-  
-  // Check if we should show the total row
-  const showTotal = validTotalBudget > 0;
   
   // Early return for no data
   if (!validCategories || validCategories.length === 0) {
     return (
       <View style={styles.container}>
+        {/* Title and Edit Button - Always display even with no data */}
+        <View style={styles.titleRow}>
+          <Text style={styles.sectionTitle}>Budget</Text>
+          <TouchableOpacity style={styles.editButton} onPress={() => setShowBudgetDialog(true)}>
+            <Ionicons name="pencil-outline" size={20} color="#3498db" />
+          </TouchableOpacity>
+        </View>
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>No budget data available</Text>
         </View>
+
+        {/* Budget Dialog */}
+        <BudgetDialog
+          visible={showBudgetDialog}
+          onClose={() => setShowBudgetDialog(false)}
+          onSave={handleSaveBudget}
+          initialBudgets={[]}
+          initialUsePercentage={usePercentageBudget}
+          initialTotalBudget={totalBudget}
+        />
       </View>
     );
   }
@@ -69,9 +116,28 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
     return "$" + value.toLocaleString();
   };
 
+  // Get budget for a category (from local state if available, otherwise use the provided budget)
+  const getCategoryBudget = (category: CategoryBudget): number => {
+    return categoryBudgets[category.name] || category.budget || DEFAULT_BUDGET;
+  };
+
+  // Recalculate total budget based on individual categories
+  const calculatedTotalBudget = usePercentageBudget ? totalBudget : validCategories.reduce(
+    (sum, cat) => sum + getCategoryBudget(cat), 0
+  );
+
   return (
     <View style={styles.container}>
-      {showTotal && (
+      {/* Title and Edit Button */}
+      <View style={styles.titleRow}>
+        <Text style={styles.sectionTitle}>Budget</Text>
+        <TouchableOpacity style={styles.editButton} onPress={() => setShowBudgetDialog(true)}>
+          <Ionicons name="pencil-outline" size={20} color="#3498db" />
+        </TouchableOpacity>
+      </View>
+      
+      {/* Display total row only when not using percentage */}
+      {!usePercentageBudget && (
         <View style={styles.categoryRow}>
           <View style={styles.categoryInfo}>
             <View style={styles.iconContainer}>
@@ -82,7 +148,7 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
           
           <View style={styles.budgetInfo}>
             <Text style={styles.budgetText}>
-              {formatCurrency(validTotalSpent)} / {formatCurrency(validTotalBudget)}
+              {formatCurrency(validTotalSpent)} / {formatCurrency(calculatedTotalBudget)}
             </Text>
             
             <View style={styles.progressBarContainer}>
@@ -90,7 +156,7 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
                 style={[
                   styles.progressBar, 
                   { 
-                    width: `${getProgressWidth(validTotalSpent, validTotalBudget)}%`, 
+                    width: `${getProgressWidth(validTotalSpent, calculatedTotalBudget)}%`, 
                     backgroundColor: '#9C56E8' 
                   } as any
                 ]} 
@@ -100,38 +166,59 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
         </View>
       )}
 
-      {validCategories.map((category, index) => (
-        <View key={index} style={styles.categoryRow}>
-          <View style={styles.categoryInfo}>
-            <View style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}>
-              <Ionicons 
-                name={(category.icon as any) || "help-circle-outline"} 
-                size={20} 
-                color={category.color} 
-              />
+      {validCategories.map((category, index) => {
+        const categoryBudget = getCategoryBudget(category);
+        return (
+          <View key={index} style={styles.categoryRow}>
+            <View style={styles.categoryInfo}>
+              <View style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}>
+                <Ionicons 
+                  name={(category.icon as any) || "help-circle-outline"} 
+                  size={20} 
+                  color={category.color} 
+                />
+              </View>
+              <Text style={styles.categoryName}>{category.name}</Text>
             </View>
-            <Text style={styles.categoryName}>{category.name}</Text>
-          </View>
-          
-          <View style={styles.budgetInfo}>
-            <Text style={styles.budgetText}>
-              {formatCurrency(category.spent)} / {formatCurrency(category.budget)}
-            </Text>
             
-            <View style={styles.progressBarContainer}>
-              <View 
-                style={[
-                  styles.progressBar, 
-                  { 
-                    width: `${getProgressWidth(category.spent, category.budget)}%`, 
-                    backgroundColor: category.color 
-                  } as any
-                ]} 
-              />
+            <View style={styles.budgetInfo}>
+              <Text style={styles.budgetText}>
+                {formatCurrency(category.spent)} {usePercentageBudget ? 
+                  `(${((category.spent / validTotalSpent) * 100).toFixed(0)}%)` : 
+                  `/ ${formatCurrency(categoryBudget)}`}
+              </Text>
+              
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBar, 
+                    { 
+                      width: `${getProgressWidth(category.spent, categoryBudget)}%`, 
+                      backgroundColor: category.color 
+                    } as any
+                  ]} 
+                />
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
+
+      {/* Budget Dialog */}
+      <BudgetDialog
+        visible={showBudgetDialog}
+        onClose={() => setShowBudgetDialog(false)}
+        onSave={handleSaveBudget}
+        initialBudgets={validCategories.map(cat => ({
+          name: cat.name,
+          budget: getCategoryBudget(cat),
+          percentage: usePercentageBudget ? (getCategoryBudget(cat) / totalBudget) * 100 : undefined,
+          color: cat.color,
+          icon: cat.icon
+        }))}
+        initialUsePercentage={usePercentageBudget}
+        initialTotalBudget={totalBudget}
+      />
     </View>
   );
 };
@@ -149,6 +236,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#222',
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f2f2f2',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   categoryRow: {
     marginBottom: 24,
