@@ -63,7 +63,7 @@ const CardFilterDropdown: React.FC<CardFilterDropdownProps> = ({
         <View
           style={[styles.cardColorIndicator, { backgroundColor: item.color }]}
         />
-        <Text style={styles.cardName}>{item.name}</Text>
+        <Text style={styles.cardName} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
       </View>
       
       {selectedCardId === item.id && (
@@ -93,7 +93,13 @@ const CardFilterDropdown: React.FC<CardFilterDropdownProps> = ({
                 { backgroundColor: selectedCard.color }
               ]} 
             />
-            <Text style={styles.filterText}>{selectedCard.name}</Text>
+            <Text 
+              style={styles.filterText}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedCard.name}
+            </Text>
           </View>
         ) : (
           <Text style={styles.filterText}>All Cards</Text>
@@ -142,11 +148,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     minWidth: 120,
+    maxWidth: 160, // Limit the width
   },
   filterText: {
     fontSize: 16,
     fontWeight: "500",
     marginRight: 8,
+    maxWidth: 100, // Limit text width to ensure space for the icon
+    flexShrink: 1, // Allow text to shrink
   },
   selectedCardPreview: {
     flexDirection: "row",
@@ -158,6 +167,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     marginRight: 8,
+    flexShrink: 0, // Prevent dot from shrinking
   },
   // Modal styles
   modalContainer: {
@@ -207,17 +217,20 @@ const styles = StyleSheet.create({
   cardLeft: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1, // Take up available space
   },
   cardColorIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,
     marginRight: 12,
+    flexShrink: 0, // Prevent indicator from shrinking
   },
   cardName: {
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
+    flex: 1, // Take up available space
   },
 });
 

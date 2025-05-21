@@ -4,7 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
-import CardFilterDropdown from "../components/CardFilterDropdown"; // Import the new component
+import CardFilterDropdown from "../components/dashboard/CardFilterDropdown"; // Import the new component
+
+
 import BudgetBarChart from "../components/dashboard/BudgetBarChart";
 import { DonutChart } from "../components/dashboard/DonutChart";
 import { getCategoryIcon, SEGMENTS } from "../components/dashboard/DonutUtils";
@@ -232,13 +234,62 @@ export default function DashboardScreen() {
   };
 
   // Format display of current period based on selected segment
-  const getPeriodDisplay = () => {
-    // ... (existing implementation)
+  const getPeriodDisplay = (): string => {
+    const segmentType = SEGMENTS[selectedSegment];
+    const now = new Date(currentPeriod);
+    
+    switch (segmentType) {
+      case "D": // Day
+        return now.toLocaleDateString('en-US', { 
+          day: 'numeric', 
+          month: 'short', 
+          year: 'numeric' 
+        });
+      case "W": // Week
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        return `${startOfWeek.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      case "M": // Month
+        return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      case "6M": // 6 Months
+        const sixMonthsAgo = new Date(now);
+        sixMonthsAgo.setMonth(now.getMonth() - 5);
+        
+        return `${sixMonthsAgo.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} - ${now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+      case "Y": // Year
+        return now.getFullYear().toString();
+      default:
+        return "All Time";
+    }
   };
 
   // Navigate to previous/next period
   const navigatePeriod = (direction: "prev" | "next") => {
-    // ... (existing implementation)
+    const segmentType = SEGMENTS[selectedSegment];
+    const newPeriod = new Date(currentPeriod);
+    
+    switch (segmentType) {
+      case "D": // Day
+        newPeriod.setDate(newPeriod.getDate() + (direction === "next" ? 1 : -1));
+        break;
+      case "W": // Week
+        newPeriod.setDate(newPeriod.getDate() + (direction === "next" ? 7 : -7));
+        break;
+      case "M": // Month
+        newPeriod.setMonth(newPeriod.getMonth() + (direction === "next" ? 1 : -1));
+        break;
+      case "6M": // 6 Months
+        newPeriod.setMonth(newPeriod.getMonth() + (direction === "next" ? 6 : -6));
+        break;
+      case "Y": // Year
+        newPeriod.setFullYear(newPeriod.getFullYear() + (direction === "next" ? 1 : -1));
+        break;
+    }
+    
+    setCurrentPeriod(newPeriod);
   };
 
   // Handle card selection from dropdown
@@ -312,11 +363,7 @@ export default function DashboardScreen() {
               <Ionicons name="chevron-back" size={24} color="#333" />
             </TouchableOpacity>
             
-            {/* Store the result of getPeriodDisplay() in a variable first */}
-            {(() => {
-              const periodDisplayText = getPeriodDisplay();
-              return <Text style={styles.periodText}>{periodDisplayText}</Text>;
-            })()}
+            <Text style={styles.periodText}>{getPeriodDisplay()}</Text>
             
             <TouchableOpacity onPress={() => navigatePeriod("next")}>
               <Ionicons name="chevron-forward" size={24} color="#333" />
