@@ -15,8 +15,13 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   title = "SPENT THIS MONTH",
   amount = 0
 }) => {
-  // Early return if no data
-  if (!data || data.length === 0) {
+  // Validate input data thoroughly
+  const validData = data?.filter(value => typeof value === 'number' && !isNaN(value)) || [];
+  const validAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  const validBudget = typeof budget === 'number' && !isNaN(budget) ? budget : 5000;
+  
+  // Early return if no valid data
+  if (!validData || validData.length === 0) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>{title}</Text>
@@ -38,15 +43,31 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
   
-  // Calculate max value for scaling
-  const maxValue = Math.max(...data, budget || 0) * 1.1; // 10% headroom
+  // Calculate max value for scaling (with fallback)
+  let maxValue = Math.max(...validData, validBudget) * 1.1; // 10% headroom
+  if (!isFinite(maxValue) || maxValue <= 0) maxValue = 1000; // Fallback value if calculation fails
   
-  // Generate chart points
-  const points = data.map((value, index) => {
-    const x = paddingLeft + (index / (data.length - 1)) * chartWidth;
-    const y = paddingTop + chartHeight - (value / maxValue) * chartHeight;
+  // Generate chart points with safety checks
+  const points = validData.map((value, index) => {
+    // Ensure values are numbers and not NaN
+    const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0;
+    const x = paddingLeft + (index / (validData.length - 1)) * chartWidth;
+    const y = paddingTop + chartHeight - (safeValue / maxValue) * chartHeight;
     return { x, y };
   });
+  
+  // Safety check for valid points
+  if (points.length < 2) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.amount}>${validAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>Insufficient data points for chart</Text>
+        </View>
+      </View>
+    );
+  }
   
   // Generate path for the line
   const linePath = points.map((point, i) => 
@@ -59,10 +80,19 @@ export const ExpenseHistoryChart: React.FC<ExpenseHistoryChartProps> = ({
   // Days of the month for x-axis
   const daysToShow = [1, 6, 11, 16, 21, 26, 31];
 
+  // Safe formatter for currency
+  const formatCurrency = (value: number): string => {
+    if (typeof value !== 'number' || isNaN(value)) return "$0";
+    return "$" + value.toLocaleString('en-US', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 0 
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.amount}>${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</Text>
+      <Text style={styles.amount}>{formatCurrency(validAmount)}</Text>
       
       <Svg width={width} height={height}>
         <Defs>

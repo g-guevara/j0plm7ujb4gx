@@ -23,8 +23,17 @@ interface DonutChartProps {
 }
 
 export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
-  // Early return if no categories
-  if (!categories || categories.length === 0) {
+  // Early validation - check if categories exist and have valid data
+  const validCategories = categories?.filter(cat => 
+    cat && 
+    typeof cat.name === 'string' && 
+    cat.name.trim() !== '' &&
+    typeof cat.amount === 'number' && 
+    !isNaN(cat.amount)
+  ) || [];
+  
+  // If no valid categories, show "no data" message
+  if (validCategories.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.chartSection}>
@@ -94,7 +103,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
   };
 
   // Get the main category (highest spending)
-  const mainCategory = categories.length > 0 ? categories[0] : null;
+  const mainCategory = validCategories.length > 0 ? validCategories[0] : null;
 
   // Only proceed if we have a main category
   if (!mainCategory) {
@@ -106,6 +115,12 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
       </View>
     );
   }
+
+  // Safely format currency amount
+  const formatAmount = (amount: number): string => {
+    if (isNaN(amount)) return "$0";
+    return "$" + amount.toFixed(0);
+  };
 
   return (
     <View style={styles.container}>
@@ -201,7 +216,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
             />
           </View>
           <Text style={styles.donutChartAmount}>
-            ${mainCategory.amount.toFixed(0)}
+            {formatAmount(mainCategory.amount)}
           </Text>
           <Text style={styles.donutChartLabel}>
             {mainCategory.name.toUpperCase()}
@@ -221,7 +236,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
 
       {/* Categories List */}
       <View style={styles.categoriesList}>
-        {categories.slice(0, 4).map((category, index) => (
+        {validCategories.slice(0, 4).map((category, index) => (
           <View key={index} style={styles.categoryItem}>
             <View style={styles.categoryLeft}>
               <View style={[styles.categoryIndicator, { backgroundColor: category.color }]}>
@@ -233,7 +248,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({ categories }) => {
               </View>
               <Text style={styles.categoryName}>{category.name}</Text>
             </View>
-            <Text style={styles.categoryAmount}>${category.amount.toFixed(0)}</Text>
+            <Text style={styles.categoryAmount}>${!isNaN(category.amount) ? category.amount.toFixed(0) : "0"}</Text>
           </View>
         ))}
       </View>

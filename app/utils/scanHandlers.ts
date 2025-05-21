@@ -1,3 +1,4 @@
+// app/utils/scanHandlers.ts
 import { Alert } from "react-native";
 import { PartialTransaction, pickImages, processTransactions } from "./imageUtils";
 import { callOpenAI, extractTransactionsFromResponse, prepareImageBase64 } from "./openiaService";

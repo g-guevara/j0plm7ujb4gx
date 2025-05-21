@@ -1,6 +1,7 @@
+// app/utils/transactionHandlers.ts
 import { Router } from "expo-router";
 import { Alert } from "react-native";
-import { addTransaction } from "../data/sampleData";
+import { addNewTransaction } from "../services/storage";
 import { PartialTransaction } from "./imageUtils";
 
 /**
@@ -41,7 +42,7 @@ export const toggleTransaction = (
 };
 
 /**
- * Guarda las transacciones seleccionadas
+ * Guarda las transacciones seleccionadas en AsyncStorage
  */
 export const saveTransactions = async (
   scannedTransactions: PartialTransaction[],
@@ -65,17 +66,16 @@ export const saveTransactions = async (
     for (const transaction of selectedTransactions) {
       // Crear la nueva transacción completa
       const newTransaction = {
-        id: undefined, // Let addTransaction assign an ID
         date: transaction.date || new Date().toISOString().split('T')[0],
         category: transaction.category || "Otros",
         name: transaction.name || "Transacción sin nombre",
         mount: transaction.mount || 0,
-        cardId: transaction.cardId || cardId // Use transaction's cardId if available, otherwise use the provided cardId
+        cardId: transaction.cardId || cardId
       };
 
-      // Actually save the transaction using the addTransaction function
-      const newId = addTransaction(newTransaction);
-      addLog(`Transacción guardada con ID: ${newId}`);
+      // Save transaction using new storage method
+      await addNewTransaction(newTransaction);
+      addLog(`Transacción guardada correctamente`);
       
       savedCount++;
     }

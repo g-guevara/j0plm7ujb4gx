@@ -1,131 +1,314 @@
+// app/services/storage.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, cardData, Transaction, transactionData } from '../data/sampleData';
+import { Card, Transaction, cardData, transactionData } from '../data/sampleData';
 
-// Clave para almacenar las transacciones en AsyncStorage
-const TRANSACTIONS_STORAGE_KEY = 'app_transactions';
-const CARDS_STORAGE_KEY = 'app_cards';
+// Keys for storing data in AsyncStorage
+const TRANSACTIONS_STORAGE_KEY = 'finance_tracker_transactions';
+const CARDS_STORAGE_KEY = 'finance_tracker_cards';
+const SELECTED_CARD_KEY = 'finance_tracker_selected_card';
 
-// Cargar transacciones desde el almacenamiento
-export const loadTransactions = async (): Promise<Transaction[]> => {
+// Default cards to create if no cards exist
+const DEFAULT_CARDS: Card[] = [
+  {
+    id: 1,
+    name: "Personal Card",
+    color: "#3498db",
+    selected: true
+  },
+  {
+    id: 2, 
+    name: "Business Card",
+    color: "#2ecc71",
+    selected: false
+  }
+];
+
+/**
+ * Initialize storage with default data if empty
+ */
+export const initializeStorage = async (): Promise<void> => {
   try {
-    const storedData = await AsyncStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+    // Check if cards exist
+    const existingCards = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
     
-    if (storedData) {
-      // Combinar datos almacenados con datos de muestra
-      const parsedData: Transaction[] = JSON.parse(storedData);
-      return [...transactionData, ...parsedData];
+    // If no cards exist, create default cards
+    if (!existingCards) {
+      console.log('No cards found, creating default cards');
+      await AsyncStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(DEFAULT_CARDS));
+      cardData.push(...DEFAULT_CARDS);
+    } else {
+      // Load existing cards into memory
+      const cards = JSON.parse(existingCards);
+      cardData.length = 0; // Clear the array
+      cardData.push(...cards);
     }
     
-    // Si no hay datos almacenados, usar solo los datos de muestra
-    return [...transactionData];
+    // Load transactions
+    const existingTransactions = await AsyncStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+    if (existingTransactions) {
+      const transactions = JSON.parse(existingTransactions);
+      transactionData.length = 0; // Clear the array
+      transactionData.push(...transactions);
+    }
+    
+    // Load selected card
+    const selectedCardId = await AsyncStorage.getItem(SELECTED_CARD_KEY);
+    if (selectedCardId) {
+      selectCard(parseInt(selectedCardId, 10));
+    }
+    
+    console.log(`Loaded ${cardData.length} cards and ${transactionData.length} transactions`);
   } catch (error) {
-    console.error('Error al cargar transacciones:', error);
-    return [...transactionData];
+    console.error('Error initializing storage:', error);
   }
 };
 
-// Guardar una nueva transacción
+/**
+ * Save all transactions to storage
+ */
+export const saveAllTransactions = async (): Promise<boolean> => {
+  try {
+    await AsyncStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactionData));
+    return true;
+  } catch (error) {
+    console.error('Error saving transactions:', error);
+    return false;
+  }
+};
+
+/**
+ * Save all cards to storage
+ */
+export const saveAllCards = async (): Promise<boolean> => {
+  try {
+    await AsyncStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cardData));
+    return true;
+  } catch (error) {
+    console.error('Error saving cards:', error);
+    return false;
+  }
+};
+
+/**
+ * Add a new transaction and save to storage
+ */
 export const saveTransaction = async (transaction: Transaction): Promise<boolean> => {
   try {
-    // Obtener transacciones existentes
-    const storedData = await AsyncStorage.getItem(TRANSACTIONS_STORAGE_KEY);
-    let transactions: Transaction[] = storedData ? JSON.parse(storedData) : [];
-    
-    // Agregar la nueva transacción
-    transactions.push(transaction);
-    
-    // Guardar en AsyncStorage
-    await AsyncStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
-    
-    return true;
+    transactionData.push(transaction);
+    return await saveAllTransactions();
   } catch (error) {
-    console.error('Error al guardar transacción:', error);
+    console.error('Error saving transaction:', error);
     return false;
   }
 };
 
-// Cargar tarjetas desde el almacenamiento
-export const loadCards = async (): Promise<Card[]> => {
-  try {
-    const storedData = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
-    
-    if (storedData) {
-      // Combinar datos almacenados con datos de muestra
-      const parsedData: Card[] = JSON.parse(storedData);
-      return [...cardData, ...parsedData];
-    }
-    
-    // Si no hay datos almacenados, usar solo los datos de muestra
-    return [...cardData];
-  } catch (error) {
-    console.error('Error al cargar tarjetas:', error);
-    return [...cardData];
-  }
-};
-
-// Guardar una nueva tarjeta
+/**
+ * Add a new card and save to storage
+ */
 export const saveCard = async (card: Card): Promise<boolean> => {
   try {
-    // Obtener tarjetas existentes
-    const storedData = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
-    let cards: Card[] = storedData ? JSON.parse(storedData) : [];
-    
-    // Agregar la nueva tarjeta
-    cards.push(card);
-    
-    // Guardar en AsyncStorage
-    await AsyncStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cards));
-    
-    return true;
+    cardData.push(card);
+    return await saveAllCards();
   } catch (error) {
-    console.error('Error al guardar tarjeta:', error);
+    console.error('Error saving card:', error);
     return false;
   }
 };
 
-// Actualizar una tarjeta existente (por ejemplo, para cambiar su estado de selección)
+/**
+ * Update a card and save to storage
+ */
 export const updateCard = async (updatedCard: Card): Promise<boolean> => {
   try {
-    // Obtener tarjetas existentes
-    const storedData = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
-    let cards: Card[] = storedData ? JSON.parse(storedData) : [];
-    
-    // Encontrar y actualizar la tarjeta
-    const index = cards.findIndex(card => card.id === updatedCard.id);
+    const index = cardData.findIndex(card => card.id === updatedCard.id);
     if (index !== -1) {
-      cards[index] = updatedCard;
+      cardData[index] = updatedCard;
     } else {
-      // Si no existe, agregarla
-      cards.push(updatedCard);
+      cardData.push(updatedCard);
     }
-    
-    // Guardar en AsyncStorage
-    await AsyncStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cards));
-    
-    return true;
+    return await saveAllCards();
   } catch (error) {
-    console.error('Error al actualizar tarjeta:', error);
+    console.error('Error updating card:', error);
     return false;
   }
 };
 
-// Obtener todas las transacciones (combinando datos en memoria y almacenados)
-export const getAllTransactions = async (): Promise<Transaction[]> => {
-  return await loadTransactions();
+/**
+ * Delete a card and save to storage
+ */
+export const deleteCard = async (cardId: number): Promise<boolean> => {
+  try {
+    const index = cardData.findIndex(card => card.id === cardId);
+    if (index !== -1) {
+      cardData.splice(index, 1);
+      return await saveAllCards();
+    }
+    return false;
+  } catch (error) {
+    console.error('Error deleting card:', error);
+    return false;
+  }
 };
 
-// Obtener todas las tarjetas (combinando datos en memoria y almacenados)
-export const getAllCards = async (): Promise<Card[]> => {
-  return await loadCards();
+/**
+ * Delete a transaction and save to storage
+ */
+export const deleteTransaction = async (transactionId: number): Promise<boolean> => {
+  try {
+    const index = transactionData.findIndex(t => t.id === transactionId);
+    if (index !== -1) {
+      transactionData.splice(index, 1);
+      return await saveAllTransactions();
+    }
+    return false;
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    return false;
+  }
 };
 
-// Exportación por defecto para solucionar la advertencia de rutas
-export default { 
-  loadTransactions, 
-  saveTransaction, 
-  getAllTransactions, 
-  loadCards, 
-  saveCard, 
-  updateCard, 
-  getAllCards 
+/**
+ * Update a transaction and save to storage
+ */
+export const updateTransaction = async (updatedTransaction: Transaction): Promise<boolean> => {
+  try {
+    const index = transactionData.findIndex(t => t.id === updatedTransaction.id);
+    if (index !== -1) {
+      transactionData[index] = updatedTransaction;
+      return await saveAllTransactions();
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    return false;
+  }
+};
+
+/**
+ * Select a card and save the selection to storage
+ */
+export const selectCard = (cardId: number): Promise<boolean> => {
+  // Update selection status in memory
+  cardData.forEach(card => {
+    card.selected = card.id === cardId;
+  });
+  
+  // Save selected card ID and updated cards to storage
+  return Promise.all([
+    AsyncStorage.setItem(SELECTED_CARD_KEY, cardId.toString()),
+    saveAllCards()
+  ])
+    .then(() => true)
+    .catch(error => {
+      console.error('Error selecting card:', error);
+      return false;
+    });
+};
+
+/**
+ * Get all transactions
+ */
+export const getAllTransactions = (): Transaction[] => {
+  return [...transactionData];
+};
+
+/**
+ * Get all cards
+ */
+export const getAllCards = (): Card[] => {
+  return [...cardData];
+};
+
+/**
+ * Get transaction by ID
+ */
+export const getTransactionById = (id: number): Transaction | undefined => {
+  return transactionData.find(t => t.id === id);
+};
+
+/**
+ * Get card by ID
+ */
+export const getCardById = (id: number): Card | undefined => {
+  return cardData.find(c => c.id === id);
+};
+
+/**
+ * Get the selected card
+ */
+export const getSelectedCard = (): Card | undefined => {
+  return cardData.find(card => card.selected);
+};
+
+/**
+ * Add a new transaction to memory and storage
+ */
+export const addNewTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<number> => {
+  // Generate a new ID
+  const newId = transactionData.length > 0 
+    ? Math.max(...transactionData.map(t => t.id)) + 1 
+    : 1;
+  
+  // Create the complete transaction
+  const newTransaction: Transaction = {
+    ...transaction,
+    id: newId
+  };
+  
+  // Add to memory array
+  transactionData.push(newTransaction);
+  
+  // Save to storage
+  await saveAllTransactions();
+  
+  // Return the new ID
+  return newId;
+};
+
+/**
+ * Add a new card to memory and storage
+ */
+export const addNewCard = async (name: string, color: string): Promise<Card> => {
+  // Generate a new ID
+  const newId = cardData.length > 0 
+    ? Math.max(...cardData.map(c => c.id)) + 1 
+    : 1;
+  
+  // Create the new card
+  const newCard: Card = {
+    id: newId,
+    name,
+    color,
+    selected: false
+  };
+  
+  // Add to memory array
+  cardData.push(newCard);
+  
+  // Save to storage
+  await saveAllCards();
+  
+  // Return the new card
+  return newCard;
+};
+
+// Export default to maintain compatibility with existing imports
+export default {
+  initializeStorage,
+  saveAllTransactions,
+  saveAllCards,
+  saveTransaction,
+  saveCard,
+  updateCard,
+  deleteCard,
+  deleteTransaction,
+  updateTransaction,
+  selectCard,
+  getAllTransactions,
+  getAllCards,
+  getTransactionById,
+  getCardById,
+  getSelectedCard,
+  addNewTransaction,
+  addNewCard
 };

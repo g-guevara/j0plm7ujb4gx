@@ -21,8 +21,26 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
   totalSpent, 
   totalBudget
 }) => {
+  // Validate data thoroughly
+  const validCategories = categories?.filter(cat => 
+    cat && 
+    typeof cat.name === 'string' && 
+    typeof cat.spent === 'number' && !isNaN(cat.spent) &&
+    typeof cat.budget === 'number' && !isNaN(cat.budget) &&
+    cat.budget > 0 && // Ensure we don't divide by zero
+    typeof cat.icon === 'string' &&
+    typeof cat.color === 'string'
+  ) || [];
+  
+  // Validate total values
+  const validTotalSpent = typeof totalSpent === 'number' && !isNaN(totalSpent) ? totalSpent : 0;
+  const validTotalBudget = typeof totalBudget === 'number' && !isNaN(totalBudget) ? totalBudget : 0;
+  
+  // Check if we should show the total row
+  const showTotal = validTotalBudget > 0;
+  
   // Early return for no data
-  if (!categories || categories.length === 0) {
+  if (!validCategories || validCategories.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.noDataContainer}>
@@ -34,13 +52,22 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
 
   const getProgressWidth = (spent: number, budget: number): number => {
     if (budget <= 0) return 0; // Prevent division by zero
+    
+    // Safety check for NaN values
+    if (isNaN(spent) || isNaN(budget)) return 0;
+    
     // Calculate percentage spent but cap at 100%
     const percentage = Math.min((spent / budget) * 100, 100);
-    return percentage;
+    
+    // Additional safety check
+    return isFinite(percentage) ? percentage : 0;
   };
 
-  // Check if we need to show a total row at the top
-  const showTotal = totalSpent !== undefined && totalBudget !== undefined && totalBudget > 0;
+  // Format currency safely
+  const formatCurrency = (value: number): string => {
+    if (typeof value !== 'number' || isNaN(value)) return "$0";
+    return "$" + value.toLocaleString();
+  };
 
   return (
     <View style={styles.container}>
@@ -55,7 +82,7 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
           
           <View style={styles.budgetInfo}>
             <Text style={styles.budgetText}>
-              ${totalSpent.toLocaleString()} / ${totalBudget.toLocaleString()}
+              {formatCurrency(validTotalSpent)} / {formatCurrency(validTotalBudget)}
             </Text>
             
             <View style={styles.progressBarContainer}>
@@ -63,7 +90,7 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
                 style={[
                   styles.progressBar, 
                   { 
-                    width: `${getProgressWidth(totalSpent, totalBudget)}%`, 
+                    width: `${getProgressWidth(validTotalSpent, validTotalBudget)}%`, 
                     backgroundColor: '#9C56E8' 
                   } as any
                 ]} 
@@ -73,18 +100,22 @@ export const BudgetBarChart: React.FC<BudgetBarChartProps> = ({
         </View>
       )}
 
-      {categories.map((category, index) => (
+      {validCategories.map((category, index) => (
         <View key={index} style={styles.categoryRow}>
           <View style={styles.categoryInfo}>
             <View style={[styles.iconContainer, { backgroundColor: `${category.color}20` }]}>
-              <Ionicons name={category.icon as any} size={20} color={category.color} />
+              <Ionicons 
+                name={(category.icon as any) || "help-circle-outline"} 
+                size={20} 
+                color={category.color} 
+              />
             </View>
             <Text style={styles.categoryName}>{category.name}</Text>
           </View>
           
           <View style={styles.budgetInfo}>
             <Text style={styles.budgetText}>
-              ${category.spent.toLocaleString()} / ${category.budget.toLocaleString()}
+              {formatCurrency(category.spent)} / {formatCurrency(category.budget)}
             </Text>
             
             <View style={styles.progressBarContainer}>
