@@ -104,7 +104,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}></Text>
         </View>
         
         {/* Profile content */}
@@ -113,8 +113,8 @@ export default function ProfileScreen() {
             <Ionicons name="person-circle" size={120} color="#3498db" />
           </View>
           
-          <Text style={styles.name}>User Profile</Text>
-          <Text style={styles.email}>user@example.com</Text>
+          <Text style={styles.name}>Settings</Text>
+          <Text style={styles.email}></Text>
           
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -132,11 +132,7 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.profileOptions}>
-            <TouchableOpacity style={styles.optionItem}>
-              <Ionicons name="settings-outline" size={24} color="#555" />
-              <Text style={styles.optionText}>Settings</Text>
-              <Ionicons name="chevron-forward" size={20} color="#999" />
-            </TouchableOpacity>
+
             
             {/* NEW: Currency Selection Option */}
             <TouchableOpacity 
@@ -198,9 +194,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+
         </View>
       </View>
       
@@ -213,6 +207,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor:"#fff", 
   },
   background: {
     position: 'absolute',
