@@ -1,7 +1,7 @@
 // app/screens/CategoriesScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
     Alert,
     FlatList,
@@ -14,19 +14,23 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { transactionData } from "../data/sampleData";
+import { Category, categoryData, transactionData } from "../data/sampleData";
+import {
+    addNewCategory,
+    deleteCategoryById,
+    isCategoryInUse,
+    updateCategory
+} from "../services/storage";
 
-interface Category {
-  name: string;
-  icon: string;
-  color: string;
+// Type for category with transaction statistics
+type CategoryWithStats = Category & {
   transactionCount: number;
   totalAmount: number;
-}
+};
 
 export default function CategoriesScreen() {
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<CategoryWithStats[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -39,7 +43,9 @@ export default function CategoriesScreen() {
     "cart-outline", "home-outline", "receipt-outline", "car-outline",
     "restaurant-outline", "bag-outline", "medical-outline", "film-outline",
     "shield-outline", "school-outline", "fitness-outline", "airplane-outline",
-    "game-controller-outline", "cafe-outline", "library-outline", "heart-outline"
+    "game-controller-outline", "cafe-outline", "library-outline", "heart-outline",
+    "trending-up-outline", "trending-up", "code-outline", "shirt-outline",
+    "cube-outline", "wallet-outline", "card-outline", "cash-outline"
   ];
 
   // Available colors for categories
@@ -49,92 +55,42 @@ export default function CategoriesScreen() {
     "#f1c40f", "#8e44ad", "#2980b9", "#16a085"
   ];
 
-  // Load categories from transaction data
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  // Load categories when screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      loadCategories();
+    }, [])
+  );
 
   const loadCategories = () => {
-    // Get unique categories from transactions
-    const categoryMap = new Map<string, { count: number; total: number }>();
+    console.log('Loading categories from storage...');
     
-    transactionData.forEach(transaction => {
-      const category = transaction.category;
-      if (categoryMap.has(category)) {
-        const existing = categoryMap.get(category)!;
-        categoryMap.set(category, {
-          count: existing.count + 1,
-          total: existing.total + transaction.mount
-        });
-      } else {
-        categoryMap.set(category, {
-          count: 1,
-          total: transaction.mount
-        });
-      }
-    });
-
-    // Convert to category objects with default icons and colors
-    const categoryList: Category[] = Array.from(categoryMap.entries()).map(([name, stats], index) => {
-      let icon = "cube-outline";
-      let color = availableColors[index % availableColors.length];
+    // Load categories from the global categoryData array
+    const loadedCategories = [...categoryData];
+    
+    // Add transaction counts for each category
+    const categoriesWithStats = loadedCategories.map(category => {
+      const transactionCount = transactionData.filter(
+        transaction => transaction.category.toLowerCase() === category.name.toLowerCase()
+      ).length;
       
-      // Set default icons based on category name
-      switch (name.toLowerCase()) {
-        case 'groceries':
-          icon = "cart-outline";
-          color = "#2ecc71";
-          break;
-        case 'rent':
-          icon = "home-outline";
-          color = "#f39c12";
-          break;
-        case 'bills':
-          icon = "receipt-outline";
-          color = "#e74c3c";
-          break;
-        case 'transportation':
-          icon = "car-outline";
-          color = "#3498db";
-          break;
-        case 'dining':
-          icon = "restaurant-outline";
-          color = "#9b59b6";
-          break;
-        case 'shopping':
-          icon = "bag-outline";
-          color = "#1abc9c";
-          break;
-        case 'healthcare':
-          icon = "medical-outline";
-          color = "#34495e";
-          break;
-        case 'entertainment':
-          icon = "film-outline";
-          color = "#e67e22";
-          break;
-        case 'insurance':
-          icon = "shield-outline";
-          color = "#f1c40f";
-          break;
-      }
+      const totalAmount = transactionData
+        .filter(transaction => transaction.category.toLowerCase() === category.name.toLowerCase())
+        .reduce((sum, transaction) => sum + transaction.mount, 0);
 
       return {
-        name,
-        icon,
-        color,
-        transactionCount: stats.count,
-        totalAmount: stats.total
+        ...category,
+        transactionCount,
+        totalAmount
       };
     });
 
-    // Sort by transaction count (most used first)
-    categoryList.sort((a, b) => b.transactionCount - a.transactionCount);
-    setCategories(categoryList);
+    setCategories(categoriesWithStats);
+    console.log(`Loaded ${categoriesWithStats.length} categories`);
   };
 
   // Handle adding a new category
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       Alert.alert("Error", "Please enter a category name");
       return;
@@ -146,21 +102,24 @@ export default function CategoriesScreen() {
       return;
     }
 
-    const newCategory: Category = {
-      name: newCategoryName.trim(),
-      icon: selectedIcon,
-      color: selectedColor,
-      transactionCount: 0,
-      totalAmount: 0
-    };
-
-    setCategories([...categories, newCategory]);
-    setShowAddModal(false);
-    setNewCategoryName("");
-    setSelectedIcon("cube-outline");
-    setSelectedColor("#3498db");
-    
-    Alert.alert("Success", `Category "${newCategory.name}" has been added`);
+    try {
+      // Add the new category using the storage service
+      const newCategory = await addNewCategory(newCategoryName.trim(), selectedIcon, selectedColor);
+      
+      // Reload categories to get updated data
+      loadCategories();
+      
+      // Reset form
+      setShowAddModal(false);
+      setNewCategoryName("");
+      setSelectedIcon("cube-outline");
+      setSelectedColor("#3498db");
+      
+      Alert.alert("Success", `Category "${newCategory.name}" has been added`);
+    } catch (error) {
+      console.error('Error adding category:', error);
+      Alert.alert("Error", "Failed to add category. Please try again.");
+    }
   };
 
   // Handle editing a category
@@ -173,32 +132,67 @@ export default function CategoriesScreen() {
   };
 
   // Handle updating a category
-  const handleUpdateCategory = () => {
+  const handleUpdateCategory = async () => {
     if (!newCategoryName.trim() || !editingCategory) {
       Alert.alert("Error", "Please enter a category name");
       return;
     }
 
-    const updatedCategories = categories.map(cat => 
-      cat.name === editingCategory.name 
-        ? { ...cat, name: newCategoryName.trim(), icon: selectedIcon, color: selectedColor }
-        : cat
-    );
+    try {
+      // Create updated category object
+      const updatedCategory: Category = {
+        ...editingCategory,
+        name: newCategoryName.trim(),
+        icon: selectedIcon,
+        color: selectedColor
+      };
 
-    setCategories(updatedCategories);
-    setShowEditModal(false);
-    setEditingCategory(null);
-    setNewCategoryName("");
-    
-    Alert.alert("Success", "Category has been updated");
+      // Update the category using the storage service
+      const success = await updateCategory(updatedCategory);
+      
+      if (success) {
+        // Update any existing transactions that use the old category name
+        const oldName = editingCategory.name;
+        const newName = newCategoryName.trim();
+        
+        if (oldName !== newName) {
+          // Update all transactions with the old category name
+          transactionData.forEach(transaction => {
+            if (transaction.category.toLowerCase() === oldName.toLowerCase()) {
+              transaction.category = newName;
+            }
+          });
+        }
+        
+        // Reload categories to get updated data
+        loadCategories();
+        
+        // Reset form
+        setShowEditModal(false);
+        setEditingCategory(null);
+        setNewCategoryName("");
+        
+        Alert.alert("Success", "Category has been updated");
+      } else {
+        throw new Error("Failed to update category");
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+      Alert.alert("Error", "Failed to update category. Please try again.");
+    }
   };
 
   // Handle deleting a category
-  const handleDeleteCategory = (category: Category) => {
-    if (category.transactionCount > 0) {
+  const handleDeleteCategory = async (category: Category) => {
+    // Check if category is being used
+    if (isCategoryInUse(category.name)) {
+      const transactionCount = transactionData.filter(
+        t => t.category.toLowerCase() === category.name.toLowerCase()
+      ).length;
+      
       Alert.alert(
         "Cannot Delete",
-        `This category has ${category.transactionCount} transactions. You cannot delete a category that is being used.`,
+        `This category has ${transactionCount} transaction${transactionCount !== 1 ? 's' : ''}. You cannot delete a category that is being used.`,
         [{ text: "OK" }]
       );
       return;
@@ -212,10 +206,21 @@ export default function CategoriesScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            const updatedCategories = categories.filter(cat => cat.name !== category.name);
-            setCategories(updatedCategories);
-            Alert.alert("Success", "Category has been deleted");
+          onPress: async () => {
+            try {
+              const success = await deleteCategoryById(category.id);
+              
+              if (success) {
+                // Reload categories to get updated data
+                loadCategories();
+                Alert.alert("Success", "Category has been deleted");
+              } else {
+                throw new Error("Failed to delete category");
+              }
+            } catch (error) {
+              console.error('Error deleting category:', error);
+              Alert.alert("Error", "Failed to delete category. Please try again.");
+            }
           }
         }
       ]
@@ -228,7 +233,7 @@ export default function CategoriesScreen() {
   };
 
   // Render category item
-  const renderCategoryItem = ({ item }: { item: Category }) => (
+  const renderCategoryItem = ({ item }: { item: CategoryWithStats }) => (
     <View style={styles.categoryItem}>
       <View style={styles.categoryHeader}>
         <View style={styles.categoryLeft}>
@@ -422,7 +427,7 @@ export default function CategoriesScreen() {
         <FlatList
           data={categories}
           renderItem={renderCategoryItem}
-          keyExtractor={(item) => item.name}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.categoryList}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
@@ -446,6 +451,7 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor:"#fff",
   },
   background: {
     position: 'absolute',
@@ -454,12 +460,10 @@ const styles = StyleSheet.create({
     right: 0,
     height: '40%',
     width: '100%',
-    zIndex: 1,
   },
   contentContainer: {
     flex: 1,
     backgroundColor: 'transparent',
-    zIndex: 2,
   },
   header: {
     flexDirection: "row",

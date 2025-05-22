@@ -1,10 +1,11 @@
 // app/services/storage.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, Transaction, cardData, transactionData } from '../data/sampleData';
+import { Card, Category, Transaction, cardData, categoryData, transactionData } from '../data/sampleData';
 
 // Keys for storing data in AsyncStorage
 const TRANSACTIONS_STORAGE_KEY = 'finance_tracker_transactions';
 const CARDS_STORAGE_KEY = 'finance_tracker_cards';
+const CATEGORIES_STORAGE_KEY = 'finance_tracker_categories';
 const SELECTED_CARD_KEY = 'finance_tracker_selected_card';
 
 // Default cards to create if no cards exist
@@ -20,6 +21,76 @@ const DEFAULT_CARDS: Card[] = [
     name: "Business Card",
     color: "#2ecc71",
     selected: false
+  }
+];
+
+// Default categories to create if no categories exist
+const DEFAULT_CATEGORIES: Category[] = [
+  {
+    id: 1,
+    name: "Health",
+    icon: "medical-outline",
+    color: "#e74c3c"
+  },
+  {
+    id: 2,
+    name: "Food",
+    icon: "restaurant-outline",
+    color: "#f39c12"
+  },
+  {
+    id: 3,
+    name: "Shopping",
+    icon: "bag-outline",
+    color: "#9b59b6"
+  },
+  {
+    id: 4,
+    name: "Housing",
+    icon: "home-outline",
+    color: "#3498db"
+  },
+  {
+    id: 5,
+    name: "Transportation",
+    icon: "car-outline",
+    color: "#1abc9c"
+  },
+  {
+    id: 6,
+    name: "Life and Entertainment",
+    icon: "film-outline",
+    color: "#e67e22"
+  },
+  {
+    id: 7,
+    name: "Financial Expenses",
+    icon: "receipt-outline",
+    color: "#34495e"
+  },
+  {
+    id: 8,
+    name: "Income",
+    icon: "trending-up-outline",
+    color: "#2ecc71"
+  },
+  {
+    id: 9,
+    name: "Clothes",
+    icon: "shirt-outline",
+    color: "#f1c40f"
+  },
+  {
+    id: 10,
+    name: "Software",
+    icon: "code-outline",
+    color: "#8e44ad"
+  },
+  {
+    id: 11,
+    name: "Investments",
+    icon: "trending-up",
+    color: "#16a085"
   }
 ];
 
@@ -43,6 +114,21 @@ export const initializeStorage = async (): Promise<void> => {
       cardData.push(...cards);
     }
     
+    // Check if categories exist
+    const existingCategories = await AsyncStorage.getItem(CATEGORIES_STORAGE_KEY);
+    
+    // If no categories exist, create default categories
+    if (!existingCategories) {
+      console.log('No categories found, creating default categories');
+      await AsyncStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(DEFAULT_CATEGORIES));
+      categoryData.push(...DEFAULT_CATEGORIES);
+    } else {
+      // Load existing categories into memory
+      const categories = JSON.parse(existingCategories);
+      categoryData.length = 0; // Clear the array
+      categoryData.push(...categories);
+    }
+    
     // Load transactions
     const existingTransactions = await AsyncStorage.getItem(TRANSACTIONS_STORAGE_KEY);
     if (existingTransactions) {
@@ -57,7 +143,7 @@ export const initializeStorage = async (): Promise<void> => {
       selectCard(parseInt(selectedCardId, 10));
     }
     
-    console.log(`Loaded ${cardData.length} cards and ${transactionData.length} transactions`);
+    console.log(`Loaded ${cardData.length} cards, ${categoryData.length} categories, and ${transactionData.length} transactions`);
   } catch (error) {
     console.error('Error initializing storage:', error);
   }
@@ -90,6 +176,19 @@ export const saveAllCards = async (): Promise<boolean> => {
 };
 
 /**
+ * Save all categories to storage
+ */
+export const saveAllCategories = async (): Promise<boolean> => {
+  try {
+    await AsyncStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categoryData));
+    return true;
+  } catch (error) {
+    console.error('Error saving categories:', error);
+    return false;
+  }
+};
+
+/**
  * Add a new transaction and save to storage
  */
 export const saveTransaction = async (transaction: Transaction): Promise<boolean> => {
@@ -116,6 +215,19 @@ export const saveCard = async (card: Card): Promise<boolean> => {
 };
 
 /**
+ * Add a new category and save to storage
+ */
+export const saveCategory = async (category: Category): Promise<boolean> => {
+  try {
+    categoryData.push(category);
+    return await saveAllCategories();
+  } catch (error) {
+    console.error('Error saving category:', error);
+    return false;
+  }
+};
+
+/**
  * Update a card and save to storage
  */
 export const updateCard = async (updatedCard: Card): Promise<boolean> => {
@@ -134,6 +246,23 @@ export const updateCard = async (updatedCard: Card): Promise<boolean> => {
 };
 
 /**
+ * Update a category and save to storage
+ */
+export const updateCategory = async (updatedCategory: Category): Promise<boolean> => {
+  try {
+    const index = categoryData.findIndex(category => category.id === updatedCategory.id);
+    if (index !== -1) {
+      categoryData[index] = updatedCategory;
+      return await saveAllCategories();
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating category:', error);
+    return false;
+  }
+};
+
+/**
  * Delete a card and save to storage
  */
 export const deleteCard = async (cardId: number): Promise<boolean> => {
@@ -146,6 +275,23 @@ export const deleteCard = async (cardId: number): Promise<boolean> => {
     return false;
   } catch (error) {
     console.error('Error deleting card:', error);
+    return false;
+  }
+};
+
+/**
+ * Delete a category and save to storage
+ */
+export const deleteCategoryById = async (categoryId: number): Promise<boolean> => {
+  try {
+    const index = categoryData.findIndex(category => category.id === categoryId);
+    if (index !== -1) {
+      categoryData.splice(index, 1);
+      return await saveAllCategories();
+    }
+    return false;
+  } catch (error) {
+    console.error('Error deleting category:', error);
     return false;
   }
 };
@@ -220,6 +366,13 @@ export const getAllCards = (): Card[] => {
 };
 
 /**
+ * Get all categories
+ */
+export const getAllCategories = (): Category[] => {
+  return [...categoryData];
+};
+
+/**
  * Get transaction by ID
  */
 export const getTransactionById = (id: number): Transaction | undefined => {
@@ -231,6 +384,20 @@ export const getTransactionById = (id: number): Transaction | undefined => {
  */
 export const getCardById = (id: number): Card | undefined => {
   return cardData.find(c => c.id === id);
+};
+
+/**
+ * Get category by ID
+ */
+export const getCategoryById = (id: number): Category | undefined => {
+  return categoryData.find(c => c.id === id);
+};
+
+/**
+ * Get category by name
+ */
+export const getCategoryByName = (name: string): Category | undefined => {
+  return categoryData.find(c => c.name.toLowerCase() === name.toLowerCase());
 };
 
 /**
@@ -292,23 +459,68 @@ export const addNewCard = async (name: string, color: string): Promise<Card> => 
   return newCard;
 };
 
+/**
+ * Add a new category to memory and storage
+ */
+export const addNewCategory = async (name: string, icon: string, color: string): Promise<Category> => {
+  // Generate a new ID
+  const newId = categoryData.length > 0 
+    ? Math.max(...categoryData.map(c => c.id)) + 1 
+    : 1;
+  
+  // Create the new category
+  const newCategory: Category = {
+    id: newId,
+    name,
+    icon,
+    color
+  };
+  
+  // Add to memory array
+  categoryData.push(newCategory);
+  
+  // Save to storage
+  await saveAllCategories();
+  
+  // Return the new category
+  return newCategory;
+};
+
+/**
+ * Check if a category is being used by any transactions
+ */
+export const isCategoryInUse = (categoryName: string): boolean => {
+  return transactionData.some(transaction => 
+    transaction.category.toLowerCase() === categoryName.toLowerCase()
+  );
+};
+
 // Export default to maintain compatibility with existing imports
 export default {
   initializeStorage,
   saveAllTransactions,
   saveAllCards,
+  saveAllCategories,
   saveTransaction,
   saveCard,
+  saveCategory,
   updateCard,
+  updateCategory,
   deleteCard,
+  deleteCategoryById,
   deleteTransaction,
   updateTransaction,
   selectCard,
   getAllTransactions,
   getAllCards,
+  getAllCategories,
   getTransactionById,
   getCardById,
+  getCategoryById,
+  getCategoryByName,
   getSelectedCard,
   addNewTransaction,
-  addNewCard
+  addNewCard,
+  addNewCategory,
+  isCategoryInUse
 };
