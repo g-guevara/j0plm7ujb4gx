@@ -50,6 +50,13 @@ export default function RootLayout() {
           }} 
         />
         <Stack.Screen 
+          name="screens/CategoriesScreen" 
+          options={{ 
+            title: "Categories",
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
           name="4o-scan" 
           options={{ 
             title: "Scan",
