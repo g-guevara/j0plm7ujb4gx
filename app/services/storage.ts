@@ -91,6 +91,12 @@ const DEFAULT_CATEGORIES: Category[] = [
     name: "Investments",
     icon: "trending-up",
     color: "#16a085"
+  },
+  {
+    id: 12,
+    name: "Others",
+    icon: "cube-outline",
+    color: "#95a5a6"
   }
 ];
 
