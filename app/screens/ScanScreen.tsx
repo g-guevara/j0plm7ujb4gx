@@ -119,23 +119,13 @@ export default function ScanScreen() {
             </View>
           )}
 
-          {/* Image Picker Section */}
-          <View style={styles.imagePickerSection}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="images-outline" size={24} color="#333" />
-              <Text style={styles.sectionTitle}>Select Images</Text>
-            </View>
-            <Text style={styles.sectionSubtitle}>
-              Select up to 7 receipt images to scan for transactions
-            </Text>
-            
-            <ScanScreenComponents.ImageSection
-              images={images}
-              scanning={scanning}
-              removeImage={removeImage}
-              onAddImages={() => handlePickImages(addLog, setImages, setScannedTransactions, images.length)}
-            />
-          </View>
+          {/* Image Selection - Direct component without wrapper */}
+          <ScanScreenComponents.ImageSection
+            images={images}
+            scanning={scanning}
+            removeImage={removeImage}
+            onAddImages={() => handlePickImages(addLog, setImages, setScannedTransactions, images.length)}
+          />
 
           {/* Scan Action Section */}
           {images.length > 0 && (
@@ -211,7 +201,7 @@ export default function ScanScreen() {
               </View>
               <Text style={styles.emptyStateTitle}>No Images Selected</Text>
               <Text style={styles.emptyStateSubtitle}>
-                Tap "Select Images" above to start scanning your receipts
+                Tap the + button above to start scanning your receipts
               </Text>
             </View>
           )}

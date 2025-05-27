@@ -10,7 +10,7 @@ export const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '160%', // Ya cambiado a 100%
+    height: '160%',
     width: '100%',
     zIndex: 1,
   },
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     color: "#000",
   },
   
-  // Estilos faltantes para el Header Component (agregados)
+  // Header Component styles
   title: {
     fontSize: 24,
     fontWeight: "700",
@@ -74,7 +74,6 @@ export const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 20,
   },
-  
   
   // Section Styles
   sectionHeader: {
@@ -136,8 +135,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   
-  // Image Picker Section
-  imagePickerSection: {
+  // Image Grid Container - Single card design
+  imageGridContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
@@ -149,11 +148,97 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  
-  // Image Section
-  imageSection: {
-    marginBottom: 0,
+  imageGridHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
+  imageGridTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    marginLeft: 8,
+  },
+  imageCounter: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#3498db',
+    backgroundColor: '#f0f8ff',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageGridSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  imageGrid: {
+    justifyContent: 'flex-start',
+  },
+  
+  // ADD IMAGE BUTTON - Circular design
+  addImageCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 2,
+    borderColor: '#3498db',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 4,
+  },
+  addImageCircleDisabled: {
+    borderColor: '#ccc',
+    backgroundColor: '#f5f5f5',
+  },
+  
+  // IMAGE GRID ITEM
+  imageGridItem: {
+    width: 100,
+    height: 100,
+    margin: 4,
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  removeImageButtonGrid: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+    zIndex: 10,
+  },
+  
+  // EMPTY STATE for images
+  emptyImageState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyImageText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+  },
+  
+  // OLD IMAGE SECTION STYLES (keeping for backward compatibility)
   imageContainer: {
     marginBottom: 16,
   },
@@ -196,7 +281,7 @@ export const styles = StyleSheet.create({
     marginTop: 5,
   },
   
-  // Thumbnails
+  // OLD Thumbnails (keeping for backward compatibility)
   thumbnailContainer: {
     marginTop: 16,
   },
@@ -501,27 +586,24 @@ export const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-
-selectedCardName: {
-  color: 'white',
-  fontWeight: '600',
-  fontSize: 16,
-  marginLeft: 8,
-},
-// Selected Card Section
-selectedCardSection: {
-  paddingHorizontal: 16,
-  marginBottom: 16,
-  // NO agregues backgroundColor aquí
-},
-selectedCardIndicator: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  alignSelf: 'flex-start',
-  paddingHorizontal: 16,
-  paddingVertical: 10,
-  borderRadius: 20,
-  // Removemos todas las sombras y efectos
-  // NO backgroundColor aquí - se aplicará dinámicamente
-},
+  selectedCardName: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  
+  // Selected Card Section
+  selectedCardSection: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  selectedCardIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
 });

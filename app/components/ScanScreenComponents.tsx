@@ -71,8 +71,29 @@ const ApiKeyModal = ({
   </View>
 );
 
-// Image Thumbnail Component - Enhanced
-const ImageThumbnail = ({ 
+// Add Image Button Component - Circular design
+const AddImageButton = ({ 
+  onPress, 
+  disabled 
+}: { 
+  onPress: () => void;
+  disabled: boolean;
+}) => (
+  <TouchableOpacity 
+    style={[styles.addImageCircle, disabled && styles.addImageCircleDisabled]}
+    onPress={onPress}
+    disabled={disabled}
+  >
+    <Ionicons 
+      name="add" 
+      size={32} 
+      color={disabled ? "#ccc" : "#3498db"} 
+    />
+  </TouchableOpacity>
+);
+
+// Image Item Component - Enhanced with remove button
+const ImageItem = ({ 
   uri, 
   index, 
   onRemove 
@@ -81,20 +102,18 @@ const ImageThumbnail = ({
   index: number;
   onRemove: (index: number) => void;
 }) => (
-  <View style={styles.imageItemContainer}>
-    <View style={styles.imageItem}>
-      <Image source={{ uri }} style={styles.thumbnailImage} resizeMode="cover" />
-    </View>
+  <View style={styles.imageGridItem}>
+    <Image source={{ uri }} style={styles.gridImage} resizeMode="cover" />
     <TouchableOpacity 
-      style={styles.removeImageButton}
+      style={styles.removeImageButtonGrid}
       onPress={() => onRemove(index)}
     >
-      <Ionicons name="close-circle" size={22} color="#e74c3c" />
+      <Ionicons name="close-circle" size={20} color="#e74c3c" />
     </TouchableOpacity>
   </View>
 );
 
-// Images Section Component - Updated design
+// Images Section Component - Single card design (no wrapper)
 const ImageSection = ({
   images,
   scanning,
@@ -105,68 +124,78 @@ const ImageSection = ({
   scanning: boolean;
   removeImage: (index: number) => void;
   onAddImages: () => void;
-}) => (
-  <View style={styles.imageSection}>
-    <View style={styles.imageContainer}>
-      <TouchableOpacity 
-        style={styles.imagePicker} 
-        onPress={onAddImages}
-        disabled={scanning}
-      >
-        {images.length > 0 ? (
-          <View style={styles.imageCountContainer}>
-            <Ionicons name="images" size={48} color="#3498db" />
-            <Text style={styles.imageCountText}>
-              {images.length} {images.length === 1 ? "image selected" : "images selected"}
-            </Text>
-            <Text style={styles.imageTapText}>
-              Tap to add more images
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.imageCountContainer}>
-            <Ionicons name="camera-outline" size={48} color="#6c757d" />
-            <Text style={styles.imagePickerText}>
-              Tap to select images (max. 7)
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </View>
+}) => {
+  const maxImages = 7;
+  const canAddMore = images.length < maxImages && !scanning;
 
-    {/* Horizontal thumbnails list */}
-    {images.length > 0 && (
-      <View style={styles.thumbnailContainer}>
-        <Text style={styles.thumbnailTitle}>
-          Selected Images ({images.length}/7)
-        </Text>
-        <FlatList
-          data={images}
-          renderItem={({ item, index }) => (
-            <ImageThumbnail 
-              uri={item} 
-              index={index} 
-              onRemove={removeImage} 
-            />
-          )}
-          keyExtractor={(_, index) => `img-${index}`}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.thumbnailList}
+  // Create a grid data array that includes the add button and images
+  const gridData = [];
+  
+  // Add the "+" button if we can add more images
+  if (canAddMore) {
+    gridData.push({ type: 'add-button' });
+  }
+  
+  // Add all the images
+  images.forEach((uri, index) => {
+    gridData.push({ type: 'image', uri, index });
+  });
+
+  const renderGridItem = ({ item }: any) => {
+    if (item.type === 'add-button') {
+      return (
+        <AddImageButton 
+          onPress={onAddImages}
+          disabled={scanning}
         />
-        {images.length < 7 && !scanning && (
-          <TouchableOpacity 
-            style={styles.addImageButton}
-            onPress={onAddImages}
-          >
-            <Ionicons name="add-circle" size={20} color="#3498db" />
-            <Text style={styles.addImageText}>Add More Images</Text>
-          </TouchableOpacity>
-        )}
+      );
+    } else {
+      return (
+        <ImageItem 
+          uri={item.uri}
+          index={item.index}
+          onRemove={removeImage}
+        />
+      );
+    }
+  };
+
+  return (
+    <View style={styles.imageGridContainer}>
+      <View style={styles.imageGridHeader}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="images-outline" size={20} color="#333" />
+          <Text style={styles.imageGridTitle}>Select Images</Text>
+        </View>
+        <Text style={styles.imageCounter}>
+          {images.length}/{maxImages}
+        </Text>
       </View>
-    )}
-  </View>
-);
+      
+      <Text style={styles.imageGridSubtitle}>
+        Tap + to add receipt images (max. {maxImages})
+      </Text>
+
+      {/* Grid of images and add button */}
+      <FlatList
+        data={gridData}
+        renderItem={renderGridItem}
+        numColumns={3}
+        keyExtractor={(item, index) => `grid-${index}`}
+        contentContainerStyle={styles.imageGrid}
+        scrollEnabled={false}
+      />
+
+      {/* Empty state when no images */}
+      {images.length === 0 && !canAddMore && (
+        <View style={styles.emptyImageState}>
+          <Ionicons name="camera-outline" size={48} color="#ccc" />
+          <Text style={styles.emptyImageText}>No images selected</Text>
+        </View>
+      )}
+    </View>
+  );
+};
 
 // Transaction Item Component - Enhanced design
 const TransactionItem = ({
