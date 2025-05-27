@@ -37,13 +37,13 @@ export const CardEditModals: React.FC<CardEditModalsProps> = ({
   
 
 const colorOptions = [
-  "rgba(255, 23, 68, 0.3)",   // rojo fluor
-  "rgba(224, 64, 251, 0.3)",  // púrpura neón
-  "rgba(92, 107, 192, 0.3)",  // azul oscuro saturado
-  "rgba(0, 128, 255, 0.3)",   // azul profundo brillante
-  "rgba(0, 191, 255, 0.3)",   // azul fluor
-  "rgba(0, 255, 162, 0.1)",   // verde aqua fluor
-  "rgba(0, 230, 118, 0.2)",   // verde neón
+  "rgba(255, 23, 68, 0.3)",    // rojo fluor
+  "rgba(216, 78, 240, 0.38)",  // púrpura neón
+  "rgba(85, 0, 255, 0.26)",    // azul violeta (aqua fluor)
+  "rgba(92, 107, 192, 0.3)",   // azul oscuro saturado
+  "rgba(0, 128, 255, 0.3)",    // azul profundo brillante
+  "rgba(0, 191, 255, 0.3)",    // azul fluor
+  "rgba(6, 195, 103, 0.2)",    // verde neón
 ];
 
 

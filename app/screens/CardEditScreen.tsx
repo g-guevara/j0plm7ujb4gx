@@ -2,11 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, StatusBar, Text, TouchableOpacity, View } from "react-native";
-import { Card, cardData } from "../data/sampleData";
-
-
 import { CardEditModals } from "../components/CardEditModals";
+import { Card } from "../data/sampleData";
 import { styles } from "../styles/CardEditStyles";
+
+// Import storage functions
+import {
+  addNewCard,
+  deleteCard,
+  getAllCards,
+  updateCard
+} from "../services/storage";
 
 export default function CardEditScreen() {
   const router = useRouter();
@@ -16,36 +22,48 @@ export default function CardEditScreen() {
   const [newCardName, setNewCardName] = useState("");
   const [newCardColor, setNewCardColor] = useState("#3498db");
   const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Load all cards
+  // Load all cards from storage
   useEffect(() => {
-    setCards([...cardData]);
+    loadCards();
   }, []);
 
-  // Handle creating a new card
-  const handleAddCard = () => {
+  const loadCards = () => {
+    const allCards = getAllCards();
+    setCards([...allCards]);
+  };
+
+  // Handle creating a new card with persistent storage
+  const handleAddCard = async () => {
     if (!newCardName.trim()) {
       Alert.alert("Error", "Please enter a card name");
       return;
     }
 
-    const newId = Math.max(...cards.map(c => c.id)) + 1;
-    const newCard: Card = {
-      id: newId,
-      name: newCardName,
-      color: newCardColor,
-      selected: false
-    };
-    
-    setCards([...cards, newCard]);
-    cardData.push(newCard); // Update the original data source
-    
-    setShowAddCardModal(false);
-    setNewCardName("");
+    setIsLoading(true);
+    try {
+      // Use the storage function to add and save the card
+      const newCard = await addNewCard(newCardName.trim(), newCardColor);
+      
+      // Reload cards from storage to get the updated list
+      loadCards();
+      
+      setShowAddCardModal(false);
+      setNewCardName("");
+      setNewCardColor("#3498db");
+      
+      Alert.alert("Success", `Card "${newCard.name}" has been added successfully.`);
+    } catch (error) {
+      console.error('Error adding card:', error);
+      Alert.alert("Error", "Failed to add card. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Handle updating a card
-  const handleUpdateCard = () => {
+  // Handle updating a card with persistent storage
+  const handleUpdateCard = async () => {
     if (!editingCard) return;
     
     if (!newCardName.trim()) {
@@ -53,27 +71,40 @@ export default function CardEditScreen() {
       return;
     }
 
-    const updatedCards = cards.map(card => 
-      card.id === editingCard.id 
-        ? { ...card, name: newCardName, color: newCardColor }
-        : card
-    );
-    
-    setCards(updatedCards);
-    
-    // Update the original data source
-    const index = cardData.findIndex(card => card.id === editingCard.id);
-    if (index !== -1) {
-      cardData[index].name = newCardName;
-      cardData[index].color = newCardColor;
+    setIsLoading(true);
+    try {
+      // Create updated card object
+      const updatedCard: Card = {
+        ...editingCard,
+        name: newCardName.trim(),
+        color: newCardColor
+      };
+      
+      // Use the storage function to update and save the card
+      const success = await updateCard(updatedCard);
+      
+      if (success) {
+        // Reload cards from storage to get the updated list
+        loadCards();
+        
+        setShowEditCardModal(false);
+        setEditingCard(null);
+        setNewCardName("");
+        setNewCardColor("#3498db");
+        
+        Alert.alert("Success", "Card has been updated successfully.");
+      } else {
+        throw new Error("Failed to update card");
+      }
+    } catch (error) {
+      console.error('Error updating card:', error);
+      Alert.alert("Error", "Failed to update card. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-    
-    setShowEditCardModal(false);
-    setEditingCard(null);
-    setNewCardName("");
   };
 
-  // Handle deleting a card
+  // Handle deleting a card with persistent storage
   const handleDeleteCard = (card: Card) => {
     Alert.alert(
       "Delete Card",
@@ -86,14 +117,24 @@ export default function CardEditScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            const updatedCards = cards.filter(c => c.id !== card.id);
-            setCards(updatedCards);
-            
-            // Update the original data source
-            const index = cardData.findIndex(c => c.id === card.id);
-            if (index !== -1) {
-              cardData.splice(index, 1);
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              // Use the storage function to delete and save changes
+              const success = await deleteCard(card.id);
+              
+              if (success) {
+                // Reload cards from storage to get the updated list
+                loadCards();
+                Alert.alert("Success", "Card has been deleted successfully.");
+              } else {
+                throw new Error("Failed to delete card");
+              }
+            } catch (error) {
+              console.error('Error deleting card:', error);
+              Alert.alert("Error", "Failed to delete card. Please try again.");
+            } finally {
+              setIsLoading(false);
             }
           }
         }
@@ -130,6 +171,7 @@ export default function CardEditScreen() {
           <TouchableOpacity 
             style={styles.cardAction}
             onPress={() => openEditModal(item)}
+            disabled={isLoading}
           >
             <Ionicons name="pencil" size={22} color="#666" />
           </TouchableOpacity>
@@ -137,6 +179,7 @@ export default function CardEditScreen() {
           <TouchableOpacity 
             style={styles.cardAction}
             onPress={() => handleDeleteCard(item)}
+            disabled={isLoading}
           >
             <Ionicons name="trash-outline" size={22} color="#e74c3c" />
           </TouchableOpacity>
@@ -170,8 +213,9 @@ export default function CardEditScreen() {
           </View>
           
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { opacity: isLoading ? 0.5 : 1 }]}
             onPress={() => setShowAddCardModal(true)}
+            disabled={isLoading}
           >
             <Text style={styles.addButtonText}>+ Add Card</Text>
           </TouchableOpacity>
@@ -184,7 +228,9 @@ export default function CardEditScreen() {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.cardsList}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No cards found. Add a new card to get started.</Text>
+            <Text style={styles.emptyText}>
+              {isLoading ? "Loading cards..." : "No cards found. Add a new card to get started."}
+            </Text>
           }
         />
       </View>

@@ -1,12 +1,17 @@
 import { Router } from "expo-router";
 import { Alert } from "react-native";
 import {
-    addCard,
-    Card,
-    selectCard,
-    Transaction,
-    transactionData
+  Card,
+  Transaction
 } from "../../data/sampleData";
+
+// Import storage functions
+import {
+  addNewCard,
+  getAllCards,
+  getAllTransactions,
+  selectCard
+} from "../../services/storage";
 
 interface TransactionHandlersProps {
   cards: Card[];
@@ -31,6 +36,7 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
     newCardName,
     setNewCardName,
     newCardColor,
+    setNewCardColor,
     router
   } = props;
 
@@ -42,40 +48,86 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
     });
   };
 
-  // Handle card selection
-  const handleCardSelect = (cardId: number) => {
-    selectCard(cardId);
-    // Update state to reflect changes
-    const updatedCards = cards.map(card => ({
-      ...card,
-      selected: card.id === cardId
-    }));
-    setCards(updatedCards);
+  // Handle card selection with persistent storage
+  const handleCardSelect = async (cardId: number) => {
+    try {
+      // Use the storage function to select and save the card
+      await selectCard(cardId);
+      
+      // Reload cards from storage to get updated selection
+      const updatedCards = getAllCards();
+      
+      // Add "All" option and update state
+      const allCardsOption: Card = {
+        id: 0,
+        name: "All",
+        color: "#555555",
+        selected: cardId === 0
+      };
+      
+      const cardsWithAllOption = [
+        allCardsOption, 
+        ...updatedCards.map(card => ({
+          ...card,
+          selected: card.id === cardId
+        }))
+      ];
+      
+      setCards(cardsWithAllOption);
 
-    // Check if "All" card (id 0) is selected
-    if (cardId === 0) {
-      // Show all transactions
-      setTransactions(transactionData);
-    } else {
-      // Filter transactions to show only those for the selected card
-      const filteredTransactions = transactionData.filter(
-        transaction => transaction.cardId === cardId
-      );
-      setTransactions(filteredTransactions);
+      // Filter transactions based on selection
+      if (cardId === 0) {
+        // Show all transactions
+        const allTransactions = getAllTransactions();
+        setTransactions(allTransactions);
+      } else {
+        // Filter transactions to show only those for the selected card
+        const allTransactions = getAllTransactions();
+        const filteredTransactions = allTransactions.filter(
+          transaction => transaction.cardId === cardId
+        );
+        setTransactions(filteredTransactions);
+      }
+    } catch (error) {
+      console.error('Error selecting card:', error);
+      Alert.alert("Error", "Failed to select card. Please try again.");
     }
   };
 
-  // Handle creating a new card
-  const handleAddCard = () => {
+  // Handle creating a new card with persistent storage
+  const handleAddCard = async () => {
     if (!newCardName.trim()) {
       Alert.alert("Error", "Please enter a card name");
       return;
     }
 
-    const newCardObj = addCard(newCardName, newCardColor);
-    setCards([...cards, newCardObj]);
-    setShowAddCardModal(false);
-    setNewCardName("");
+    try {
+      // Use the storage function to add and save the card
+      const newCard = await addNewCard(newCardName.trim(), newCardColor);
+      
+      // Reload cards from storage to get the updated list
+      const updatedCards = getAllCards();
+      
+      // Add "All" option back to the list
+      const allCardsOption: Card = {
+        id: 0,
+        name: "All",
+        color: "#555555",
+        selected: true
+      };
+      
+      const cardsWithAllOption = [allCardsOption, ...updatedCards];
+      setCards(cardsWithAllOption);
+      
+      setShowAddCardModal(false);
+      setNewCardName("");
+      setNewCardColor("#3498db");
+      
+      Alert.alert("Success", `Card "${newCard.name}" has been added successfully.`);
+    } catch (error) {
+      console.error('Error adding card:', error);
+      Alert.alert("Error", "Failed to add card. Please try again.");
+    }
   };
 
   // Navigate to scan screen

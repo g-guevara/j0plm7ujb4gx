@@ -9,8 +9,16 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import { Card, cardData, Transaction, transactionData } from "../data/sampleData";
+import { Card, Transaction } from "../data/sampleData";
 import { styles as transactionStyles } from "../styles/transactionStyles";
+
+// Import storage functions
+import {
+  deleteTransaction as deleteTransactionFromStorage,
+  getAllCards,
+  getAllTransactions,
+  updateTransaction
+} from "../services/storage";
 
 import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
 import { TransactionComponents } from "../components/transactions/TransactionComponents";
@@ -36,8 +44,8 @@ const localStyles = StyleSheet.create({
 
 export default function TransactionsScreen() {
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>(transactionData);
-  const [cards, setCards] = useState<Card[]>(cardData);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
   const [newCardName, setNewCardName] = useState("");
   const [newCardColor, setNewCardColor] = useState("#3498db");
@@ -61,13 +69,45 @@ export default function TransactionsScreen() {
     router
   });
 
-  // Add "All" card option
-  const allCardsOption: Card = {
-    id: 0,
-    name: "All",
-    color: "#555555",
-    selected: true
-  };
+  // Function to load data from storage
+  const loadDataFromStorage = useCallback(() => {
+    console.log("Loading data from storage...");
+    
+    try {
+      // Load transactions from storage
+      const storedTransactions = getAllTransactions();
+      setTransactions([...storedTransactions]);
+      console.log(`Loaded ${storedTransactions.length} transactions from storage`);
+      
+      // Load cards from storage
+      const storedCards = getAllCards();
+      
+      // Add "All" card option to the beginning of the cards array
+      const allCardsOption: Card = {
+        id: 0,
+        name: "All",
+        color: "#555555",
+        selected: true // Default to "All" selected
+      };
+      
+      // Check if any card is actually selected, otherwise default to "All"
+      const hasSelectedCard = storedCards.some(card => card.selected);
+      const updatedCards = [
+        { ...allCardsOption, selected: !hasSelectedCard },
+        ...storedCards.map(card => ({
+          ...card,
+          selected: hasSelectedCard ? card.selected : false
+        }))
+      ];
+      
+      setCards(updatedCards);
+      console.log(`Loaded ${storedCards.length} cards from storage (plus "All" option)`);
+      
+    } catch (error) {
+      console.error("Error loading data from storage:", error);
+      Alert.alert("Error", "Failed to load data. Please restart the app.");
+    }
+  }, []);
 
   // Handle transaction icon press to open category selection modal
   const handleTransactionIconPress = (transaction: Transaction) => {
@@ -76,69 +116,77 @@ export default function TransactionsScreen() {
   };
 
   // Handle category selection
-  const handleCategorySelect = (category: string, transactionId: number) => {
-    // Find and update the transaction with the new category
-    const updatedTransactions = transactions.map(transaction => 
-      transaction.id === transactionId 
-        ? { ...transaction, category: category }
-        : transaction
-    );
-    
-    // Update the transactions data
-    setTransactions(updatedTransactions);
-    
-    // Also update the original data source
-    const index = transactionData.findIndex(t => t.id === transactionId);
-    if (index !== -1) {
-      transactionData[index].category = category;
+  const handleCategorySelect = async (category: string, transactionId: number) => {
+    try {
+      // Find the transaction in our local state
+      const updatedTransactions = transactions.map(transaction => 
+        transaction.id === transactionId 
+          ? { ...transaction, category: category }
+          : transaction
+      );
+      
+      // Update local state
+      setTransactions(updatedTransactions);
+      
+      // Find the transaction to update
+      const transactionToUpdate = updatedTransactions.find(t => t.id === transactionId);
+      
+      if (transactionToUpdate) {
+        // Update in storage using the storage service
+        const success = await updateTransaction(transactionToUpdate);
+        
+        if (success) {
+          // Close the modal
+          setShowCategoryModal(false);
+          setSelectedTransaction(null);
+          
+          // Show confirmation
+          Alert.alert("Category Updated", `Transaction category updated to ${category}`);
+        } else {
+          throw new Error("Failed to update transaction in storage");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating transaction category:", error);
+      Alert.alert("Error", "Failed to update transaction category. Please try again.");
+      
+      // Reload data to ensure consistency
+      loadDataFromStorage();
     }
-    
-    // Close the modal
-    setShowCategoryModal(false);
-    setSelectedTransaction(null);
-    
-    // Show confirmation
-    Alert.alert("Category Updated", `Transaction category updated to ${category}`);
   };
 
   // Handle transaction deletion
-  const handleDeleteTransaction = (transactionId: number) => {
-    // Remove from the state array
-    const updatedTransactions = transactions.filter(
-      transaction => transaction.id !== transactionId
-    );
-    setTransactions(updatedTransactions);
-    
-    // Remove from the original data source
-    const index = transactionData.findIndex(t => t.id === transactionId);
-    if (index !== -1) {
-      transactionData.splice(index, 1);
+  const handleDeleteTransaction = async (transactionId: number) => {
+    try {
+      // Delete from storage first
+      const success = await deleteTransactionFromStorage(transactionId);
+      
+      if (success) {
+        // Remove from local state
+        const updatedTransactions = transactions.filter(
+          transaction => transaction.id !== transactionId
+        );
+        setTransactions(updatedTransactions);
+        
+        // Show success message
+      } else {
+        throw new Error("Failed to delete transaction from storage");
+      }
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      Alert.alert("Error", "Failed to delete transaction. Please try again.");
+      
+      // Reload data to ensure consistency
+      loadDataFromStorage();
     }
-    
-    // Show success message
-    Alert.alert("Transaction Deleted", "The transaction has been deleted successfully.");
   };
 
   // Load all transactions and cards when the screen gains focus
   useFocusEffect(
     useCallback(() => {
-      console.log("Wallet screen focused - reloading cards data");
-      
-      // IMPORTANT: Always reload transactions from the source
-      setTransactions([...transactionData]);
-      
-      // Add "All" card option to the beginning of the cards array
-      const updatedCards = [allCardsOption, ...cardData.map(card => ({
-        ...card,
-        selected: card.id === 0 // Only "All" is selected by default
-      }))];
-      
-      setCards(updatedCards);
-      
-      console.log(`Loaded ${cardData.length} cards from cardData`);
-      console.log(`Loaded ${transactionData.length} transactions from transactionData`);
-      
-    }, []) // Dependencies array should be empty to run every time the screen is focused
+      console.log("Wallet screen focused - reloading data from storage");
+      loadDataFromStorage();
+    }, [loadDataFromStorage])
   );
 
   return (
