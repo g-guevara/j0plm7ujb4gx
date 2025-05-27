@@ -33,7 +33,23 @@ export const CardEditModals: React.FC<CardEditModalsProps> = ({
   handleAddCard,
   handleUpdateCard
 }) => {
-  const colorOptions = ["#3498db", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6", "#1abc9c", "#34495e", "#e67e22"];
+
+  
+
+const colorOptions = [
+  "rgba(255, 23, 68, 0.3)",   // rojo fluor
+  "rgba(224, 64, 251, 0.3)",  // púrpura neón
+  "rgba(92, 107, 192, 0.3)",  // azul oscuro saturado
+  "rgba(0, 128, 255, 0.3)",   // azul profundo brillante
+  "rgba(0, 191, 255, 0.3)",   // azul fluor
+  "rgba(0, 255, 162, 0.1)",   // verde aqua fluor
+  "rgba(0, 230, 118, 0.2)",   // verde neón
+];
+
+
+
+  
+
 
   // Render color option for card creation/editing
   const renderColorOption = (color: string) => (

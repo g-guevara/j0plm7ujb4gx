@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
   },
 
   // Header / Title
@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     color: "#000",
   },
   editCardsButton: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#fff",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -29,7 +29,8 @@ export const styles = StyleSheet.create({
   editCardsButtonText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#333",
+    color: "#55b4fe",
+
   },
   // Cards Section
   cardsSection: {

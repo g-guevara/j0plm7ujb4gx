@@ -24,79 +24,80 @@ const DEFAULT_CARDS: Card[] = [
   }
 ];
 
-// Default categories to create if no categories exist
+
+
 const DEFAULT_CATEGORIES: Category[] = [
   {
     id: 1,
     name: "Health",
     icon: "medical-outline",
-    color: "#e74c3c"
+    color: "#2980b9" // Blue
   },
   {
     id: 2,
     name: "Food",
     icon: "restaurant-outline",
-    color: "#f39c12"
+    color: "#27ae60" // Dark green
   },
   {
     id: 3,
     name: "Shopping",
     icon: "bag-outline",
-    color: "#9b59b6"
+    color: "#9b59b6" // Purple
   },
   {
     id: 4,
     name: "Housing",
     icon: "home-outline",
-    color: "#3498db"
+    color: "#3498db" // Light blue
   },
   {
     id: 5,
     name: "Transportation",
     icon: "car-outline",
-    color: "#1abc9c"
+    color: "#1abc9c" // Teal
   },
   {
     id: 6,
     name: "Life and Entertainment",
     icon: "film-outline",
-    color: "#e67e22"
+    color: "#6c5ce7" // Light purple
   },
   {
     id: 7,
     name: "Financial Expenses",
     icon: "receipt-outline",
-    color: "#34495e"
+    color: "#34495e" // Dark blue-gray
   },
   {
     id: 8,
     name: "Income",
     icon: "trending-up-outline",
-    color: "#2ecc71"
+    color: "#2ecc71" // Green
   },
   {
     id: 9,
     name: "Clothes",
     icon: "shirt-outline",
-    color: "#f1c40f"
+    color: "#74b9ff" // Sky blue
   },
   {
     id: 10,
     name: "Software",
     icon: "code-outline",
-    color: "#8e44ad"
+    color: "#8e44ad" // Dark purple
   },
   {
     id: 11,
     name: "Investments",
     icon: "trending-up",
-    color: "#16a085"
+    color: "#16a085" // Dark teal
   },
   {
     id: 12,
     name: "Others",
     icon: "cube-outline",
-    color: "#95a5a6"
+    color: "#00cec9" // Cyan
   }
 ];
 
