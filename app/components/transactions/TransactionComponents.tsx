@@ -50,7 +50,7 @@ const renderSectionHeader = ({ section }: { section: { title: string; total: num
       <Text style={transactionStyles.dotSeparator}>{"............................................"}</Text>
     </View>
     <Text style={transactionStyles.sectionHeaderAmount}>
-      {section.total < 0 ? `-US${Math.abs(section.total).toFixed(0)}` : `-US${section.total.toFixed(0)}`}
+      {section.total < 0 ? `-${Math.abs(section.total).toFixed(0)}` : `-${section.total.toFixed(0)}`}
     </Text>
   </View>
 );

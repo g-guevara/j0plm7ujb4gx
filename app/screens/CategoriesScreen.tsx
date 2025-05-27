@@ -3,23 +3,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    Modal,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { Category, categoryData, transactionData } from "../data/sampleData";
 import {
-    addNewCategory,
-    deleteCategoryById,
-    isCategoryInUse,
-    updateCategory
+  addNewCategory,
+  deleteCategoryById,
+  isCategoryInUse,
+  updateCategory
 } from "../services/storage";
 
 // Type for category with transaction statistics
@@ -42,18 +42,27 @@ export default function CategoriesScreen() {
   const availableIcons = [
     "cart-outline", "home-outline", "receipt-outline", "car-outline",
     "restaurant-outline", "bag-outline", "medical-outline", "film-outline",
-    "shield-outline", "school-outline", "fitness-outline", "airplane-outline",
-    "game-controller-outline", "cafe-outline", "library-outline", "heart-outline",
-    "trending-up-outline", "trending-up", "code-outline", "shirt-outline",
-    "cube-outline", "wallet-outline", "card-outline", "cash-outline"
+     "school-outline", "fitness-outline", "airplane-outline",
+    "game-controller-outline", "cafe-outline", "library-outline",
+     "heart-outline", "trending-up", "code-outline", "shirt-outline",
+    "cube-outline", "card-outline", 
   ];
 
-  // Available colors for categories
-  const availableColors = [
-    "#3498db", "#2ecc71", "#e74c3c", "#f39c12", 
-    "#9b59b6", "#1abc9c", "#34495e", "#e67e22",
-    "#f1c40f", "#8e44ad", "#2980b9", "#16a085"
-  ];
+// Available colors for categories - Cool colors only
+const availableColors = [
+    "#3498db", // Light blue
+    "#2ecc71", // Green
+    "#1abc9c", // Teal
+    "#9b59b6", // Purple
+    "#34495e", // Dark blue-gray
+    "#8e44ad", // Dark purple
+    "#2980b9", // Blue
+    "#16a085", // Dark teal
+    "#27ae60", // Dark green
+    "#6c5ce7", // Light purple
+    "#74b9ff", // Sky blue
+    "#00cec9"  // Cyan
+];
 
   // Load categories when screen focuses
   useFocusEffect(

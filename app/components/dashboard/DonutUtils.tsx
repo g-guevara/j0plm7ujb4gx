@@ -65,10 +65,10 @@ export const getCategoryIcon = (category: string) => {
 export const formatCurrency = (amount: number) => {
   // Check for NaN or invalid values
   if (amount === undefined || amount === null || isNaN(amount)) {
-    return "US$0";
+    return "0";
   }
   
-  return `US$${amount.toFixed(0)}`;
+  return `${amount.toFixed(0)}`;
 };
 
 /**

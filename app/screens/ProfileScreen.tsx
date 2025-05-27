@@ -9,8 +9,7 @@ import { cardData, transactionData } from "../data/sampleData";
 import { CurrencyModal, ProfileOption } from "../components/ProfileComponents";
 
 
-
-import { currencies, getUniqueCategories, handleCategoriesPress, handleExportExcel } from "../utils/ProfileHandlers";
+import { currencies, getUniqueCategories, handleCategoriesPress, handleExportExcel, handleHelpSupport, handleNotifications, handlePrivacySecurity } from "../utils/ProfileHandlers";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -80,7 +79,16 @@ export default function ProfileScreen() {
           
           <View style={styles.profileOptions}>
             {/* Currency Selection Option */}
-
+            <ProfileOption 
+              icon="cash-outline"
+              text="Currency"
+              onPress={() => setShowCurrencyModal(true)}
+              badge={
+                <View style={styles.currencyBadge}>
+                  <Text style={styles.currencyBadgeText}>{selectedCurrency}</Text>
+                </View>
+              }
+            />
             
             {/* Categories Option */}
             <ProfileOption 
@@ -117,19 +125,19 @@ export default function ProfileScreen() {
             <ProfileOption 
               icon="notifications-outline"
               text="Notifications"
-              onPress={() => {}}
+              onPress={handleNotifications}
             />
             
             <ProfileOption 
               icon="shield-checkmark-outline"
               text="Privacy & Security"
-              onPress={() => {}}
+              onPress={handlePrivacySecurity}
             />
             
             <ProfileOption 
               icon="help-circle-outline"
               text="Help & Support"
-              onPress={() => {}}
+              onPress={handleHelpSupport}
             />
           </View>
         </View>

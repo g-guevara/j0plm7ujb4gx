@@ -10,11 +10,11 @@ import { styles } from "../../styles/transactionStyles";
 export const formatCurrency = (amount: number) => {
   // Check for NaN, undefined, or invalid values
   if (amount === undefined || amount === null || isNaN(amount)) {
-    return "US$0.0";
+    return "$0.0";
   }
   
   // For transaction amounts - showing one decimal place
-  return "US$" + amount.toFixed(1);
+  return "$" + amount.toFixed(1);
 };
 
 /**

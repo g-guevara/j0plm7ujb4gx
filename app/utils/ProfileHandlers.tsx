@@ -117,6 +117,117 @@ export const handleCategoriesPress = (router: Router): void => {
   router.push("/screens/CategoriesScreen");
 };
 
+// Function to handle Privacy & Security
+export const handlePrivacySecurity = (): void => {
+  Alert.alert(
+    "Privacy & Security",
+    "🔒 Your data is secure with CleanWallet\n\n" +
+    "• All transactions are stored locally on your device\n" +
+    "• We use bank-level encryption (AES-256)\n" +
+    "• No data is shared with third parties\n" +
+    "• Optional biometric authentication available\n" +
+    "• Regular security audits performed\n" +
+    "• You can export or delete your data anytime\n\n" +
+    "For security questions: security@cleanwallet.com",
+    [
+      { text: "OK" },
+      { 
+        text: "Contact Security", 
+        onPress: () => Alert.alert(
+          "Contact Security Team",
+          "Email: security@cleanwallet.com\n\nWe typically respond within 24 hours."
+        )
+      }
+    ]
+  );
+};
+
+// Function to handle Help & Support with FAQ
+export const handleHelpSupport = (): void => {
+  Alert.alert(
+    "Help & Support",
+    "📞 CleanWallet Support\n\n" +
+    "📧 Contact: contact@cleanwallet.com\n" +
+    "⏰ Response time: 24-48 hours\n\n" +
+    "Choose an option below:",
+    [
+      { text: "Cancel" },
+      { 
+        text: "View FAQ", 
+        onPress: () => showFAQ()
+      },
+      { 
+        text: "Contact Us", 
+        onPress: () => Alert.alert(
+          "Contact Support",
+          "📧 Email: contact@cleanwallet.com\n\n" +
+          "Please include:\n" +
+          "• Your device model\n" +
+          "• App version\n" +
+          "• Description of the issue\n\n" +
+          "We'll get back to you within 24-48 hours!"
+        )
+      }
+    ]
+  );
+};
+
+// Function to show FAQ
+const showFAQ = (): void => {
+  Alert.alert(
+    "Frequently Asked Questions",
+    "❓ CleanWallet FAQ\n\n" +
+    "Q: How do I add a transaction?\n" +
+    "A: Use the scan feature or add manually in the Wallet tab.\n\n" +
+    "Q: Can I export my data?\n" +
+    "A: Yes! Go to Profile > Export to Excel.\n\n" +
+    "Q: Is my data safe?\n" +
+    "A: Absolutely. All data is stored locally with encryption.\n\n" +
+    "Q: How do I add custom categories?\n" +
+    "A: Go to Profile > Categories > Add button.\n\n" +
+    "Q: Can I use different currencies?\n" +
+    "A: Yes, change it in Profile > Currency settings.",
+    [
+      { text: "Back", onPress: () => handleHelpSupport() },
+      { 
+        text: "More Help", 
+        onPress: () => Alert.alert(
+          "Need More Help?",
+          "Can't find what you're looking for?\n\n" +
+          "📧 Email us: contact@cleanwallet.com\n\n" +
+          "Include 'FAQ Request' in the subject line for priority support."
+        )
+      }
+    ]
+  );
+};
+
+// Function to handle notifications settings
+export const handleNotifications = (): void => {
+  Alert.alert(
+    "Notifications",
+    "🔔 Notification Settings\n\n" +
+    "Customize your notification preferences:\n\n" +
+    "• Daily spending summaries\n" +
+    "• Weekly budget alerts\n" +
+    "• Monthly reports\n" +
+    "• Security notifications\n" +
+    "• App updates\n\n" +
+    "Feature coming soon in next update!",
+    [
+      { text: "OK" },
+      { 
+        text: "Get Notified", 
+        onPress: () => Alert.alert(
+          "Stay Updated",
+          "We'll notify you when notification settings are available!\n\n" +
+          "Follow us for updates at contact@cleanwallet.com"
+        )
+      }
+    ]
+  );
+};
+
 // Function to handle currency selection
 export const handleCurrencySelect = (
   currency: string, 
@@ -185,6 +296,9 @@ export default {
   handleExportExcel,
   handleCategoriesPress,
   handleCurrencySelect,
+  handlePrivacySecurity,
+  handleHelpSupport,
+  handleNotifications,
   getCurrencyByCode,
   formatCurrencyDisplay,
   getStatsText,
