@@ -24,20 +24,46 @@ import {
 // Render each card item
 const renderCard = ({ item, onCardSelect }: { item: Card, onCardSelect: (id: number) => void }) => {
   const isSelected = item.selected;
+  const isAllCardsOption = item.id === 0; // Identificar la opción "All Cards"
   
   return (
     <TouchableOpacity
       style={[
         transactionStyles.cardItem, 
-        { backgroundColor: isSelected ? item.color : '#e0e0e0' },
+        { 
+          backgroundColor: isAllCardsOption 
+            ? 'rgba(255, 255, 255, 0.2)' // Efecto vidrio opacado para "All Cards"
+            : item.color, // Color original para las demás tarjetas
+          borderWidth: isSelected ? 3 : (isAllCardsOption ? 1 : 0), 
+          borderColor: isSelected ? '#000000' : (isAllCardsOption ? 'rgba(255, 255, 255, 0.8)' : 'transparent'),
+          // Efecto glassmorphism para "All Cards"
+          ...(isAllCardsOption && {
+            shadowColor: 'rgba(0, 0, 0, 0.1)',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 10,
+            elevation: 5,
+          })
+        },
       ]}
       onPress={() => onCardSelect(item.id)}
     >
-      <Text style={transactionStyles.cardName}>{item.name}</Text>
+      <Text style={[
+        transactionStyles.cardName,
+        isAllCardsOption && { 
+          color: '#333333', // Texto más oscuro para "All Cards" para mejor contraste
+          fontWeight: '600' 
+        }
+      ]}>
+        {item.name}
+      </Text>
       
-      {isSelected && (
-        <Text style={transactionStyles.cardAmount}>$23,00</Text>
-      )}
+      <Text style={[
+        transactionStyles.cardAmount,
+        isAllCardsOption && { color: '#666666' } // Texto más oscuro para el monto
+      ]}>
+        $23,00
+      </Text>
     </TouchableOpacity>
   );
 };
