@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Button, FlatList, Image, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Card } from "../data/sampleData";
 import { styles } from "../styles/4o-scanStyles";
 import { PartialTransaction } from "../utils/imageUtils";
 
-// Header Component
+// Header Component - Simplified since header is now handled in main screen
 const Header = ({ 
   title, 
   subtitle, 
@@ -26,7 +26,7 @@ const Header = ({
   </View>
 );
 
-// API Key Modal Component
+// API Key Modal Component - Updated for new design
 const ApiKeyModal = ({ 
   apiKey, 
   setApiKey, 
@@ -39,10 +39,12 @@ const ApiKeyModal = ({
   onSave: () => void;
 }) => (
   <View style={styles.apiKeyContainer}>
-    <Text style={styles.apiKeyTitle}>API Key de OpenAI</Text>
+    <View style={styles.sectionHeader}>
+      <Ionicons name="key-outline" size={24} color="#333" />
+      <Text style={styles.apiKeyTitle}>OpenAI API Key Required</Text>
+    </View>
     <Text style={styles.apiKeyDescription}>
-      Ingresa tu API Key de OpenAI para analizar imágenes.
-      La API key se guardará de forma segura en tu dispositivo.
+      Enter your OpenAI API Key to analyze images. The API key will be stored securely on your device.
     </Text>
     <TextInput
       style={styles.apiKeyInput}
@@ -53,20 +55,23 @@ const ApiKeyModal = ({
       autoCapitalize="none"
     />
     <View style={styles.apiKeyButtons}>
-      <Button
-        title="Cancelar"
+      <TouchableOpacity
+        style={[styles.scanButton, { backgroundColor: '#95a5a6', marginRight: 8 }]}
         onPress={onCancel}
-        color="#999"
-      />
-      <Button
-        title="Guardar"
+      >
+        <Text style={styles.scanButtonText}>Cancel</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.scanButton, { marginLeft: 8 }]}
         onPress={onSave}
-      />
+      >
+        <Text style={styles.scanButtonText}>Save</Text>
+      </TouchableOpacity>
     </View>
   </View>
 );
 
-// Image Thumbnail Component
+// Image Thumbnail Component - Enhanced
 const ImageThumbnail = ({ 
   uri, 
   index, 
@@ -89,7 +94,7 @@ const ImageThumbnail = ({
   </View>
 );
 
-// Images Section Component
+// Images Section Component - Updated design
 const ImageSection = ({
   images,
   scanning,
@@ -110,18 +115,21 @@ const ImageSection = ({
       >
         {images.length > 0 ? (
           <View style={styles.imageCountContainer}>
-            <Ionicons name="images" size={40} color="#3498db" />
+            <Ionicons name="images" size={48} color="#3498db" />
             <Text style={styles.imageCountText}>
-              {images.length} {images.length === 1 ? "imagen seleccionada" : "imágenes seleccionadas"}
+              {images.length} {images.length === 1 ? "image selected" : "images selected"}
             </Text>
             <Text style={styles.imageTapText}>
-              Toca para añadir más imágenes
+              Tap to add more images
             </Text>
           </View>
         ) : (
-          <Text style={styles.imagePickerText}>
-            Toca para seleccionar imágenes (máx. 7)
-          </Text>
+          <View style={styles.imageCountContainer}>
+            <Ionicons name="camera-outline" size={48} color="#6c757d" />
+            <Text style={styles.imagePickerText}>
+              Tap to select images (max. 7)
+            </Text>
+          </View>
         )}
       </TouchableOpacity>
     </View>
@@ -130,7 +138,7 @@ const ImageSection = ({
     {images.length > 0 && (
       <View style={styles.thumbnailContainer}>
         <Text style={styles.thumbnailTitle}>
-          Imágenes seleccionadas ({images.length}/7)
+          Selected Images ({images.length}/7)
         </Text>
         <FlatList
           data={images}
@@ -143,7 +151,7 @@ const ImageSection = ({
           )}
           keyExtractor={(_, index) => `img-${index}`}
           horizontal
-          showsHorizontalScrollIndicator={true}
+          showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.thumbnailList}
         />
         {images.length < 7 && !scanning && (
@@ -151,8 +159,8 @@ const ImageSection = ({
             style={styles.addImageButton}
             onPress={onAddImages}
           >
-            <Ionicons name="add-circle" size={24} color="#3498db" />
-            <Text style={styles.addImageText}>Añadir imagen</Text>
+            <Ionicons name="add-circle" size={20} color="#3498db" />
+            <Text style={styles.addImageText}>Add More Images</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -160,7 +168,7 @@ const ImageSection = ({
   </View>
 );
 
-// Transaction Item Component
+// Transaction Item Component - Enhanced design
 const TransactionItem = ({
   transaction,
   index,
@@ -184,6 +192,7 @@ const TransactionItem = ({
       transaction.selected ? styles.selectedCard : {}
     ]}
     onPress={() => onToggle(index)}
+    activeOpacity={0.7}
   >
     <View style={styles.transactionInfo}>
       <Text style={styles.transactionName}>{transaction.name}</Text>
@@ -209,7 +218,7 @@ const TransactionItem = ({
           transaction.selected ? styles.checkboxSelected : {}
         ]}>
           {transaction.selected && (
-            <Text style={styles.checkmark}>✓</Text>
+            <Ionicons name="checkmark" size={16} color="white" />
           )}
         </View>
       </View>
@@ -217,7 +226,7 @@ const TransactionItem = ({
   </TouchableOpacity>
 );
 
-// Transaction Results Component
+// Transaction Results Component - Enhanced design
 const TransactionResults = ({
   transactions,
   selectedCard,
@@ -236,42 +245,58 @@ const TransactionResults = ({
   formatAmount: (amount: number | undefined) => string;
   getAmountStyle: (amount: number | undefined, styles: any) => any;
   styles: any;
-}) => (
-  <View style={styles.resultContainer}>
-    <View style={styles.resultHeader}>
-      <Text style={styles.resultTitle}>Transacciones Extraídas ({transactions.length}):</Text>
+}) => {
+  const selectedCount = transactions.filter(t => t.selected).length;
+  
+  return (
+    <View style={{ marginTop: 16 }}>
+      <View style={styles.resultHeader}>
+        <Text style={styles.resultTitle}>
+          Found {transactions.length} Transaction{transactions.length !== 1 ? 's' : ''}
+        </Text>
+        
+        <View style={styles.selectAllContainer}>
+          <Text style={styles.selectAllText}>Select All</Text>
+          <Switch
+            value={transactions.every(t => t.selected)}
+            onValueChange={onToggleAll}
+            trackColor={{ false: "#e9ecef", true: "#a0c4ff" }}
+            thumbColor={transactions.every(t => t.selected) ? "#3498db" : "#f4f3f4"}
+          />
+        </View>
+      </View>
       
-      <View style={styles.selectAllContainer}>
-        <Text style={styles.selectAllText}>Seleccionar Todo</Text>
-        <Switch
-          value={transactions.every(t => t.selected)}
-          onValueChange={onToggleAll}
+      {transactions.map((transaction, index) => (
+        <TransactionItem
+          key={index}
+          transaction={transaction}
+          index={index}
+          selectedCard={selectedCard}
+          onToggle={onToggleTransaction}
+          formatAmount={formatAmount}
+          getAmountStyle={getAmountStyle}
+          styles={styles}
         />
+      ))}
+
+      <View style={{ marginTop: 20 }}>
+        <TouchableOpacity
+          style={[
+            styles.scanButton,
+            !selectedCount && styles.scanButtonDisabled
+          ]}
+          onPress={onSaveTransactions}
+          disabled={!selectedCount}
+        >
+          <Ionicons name="save-outline" size={20} color="white" style={styles.scanButtonIcon} />
+          <Text style={styles.scanButtonText}>
+            Save {selectedCount} Transaction{selectedCount !== 1 ? 's' : ''}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
-    
-    {transactions.map((transaction, index) => (
-      <TransactionItem
-        key={index}
-        transaction={transaction}
-        index={index}
-        selectedCard={selectedCard}
-        onToggle={onToggleTransaction}
-        formatAmount={formatAmount}
-        getAmountStyle={getAmountStyle}
-        styles={styles}
-      />
-    ))}
-
-    <View style={styles.buttonContainer}>
-      <Button
-        title="Guardar Transacciones"
-        onPress={onSaveTransactions}
-        disabled={!transactions.some(t => t.selected)}
-      />
-    </View>
-  </View>
-);
+  );
+};
 
 // Export all components as a single object
 export const ScanScreenComponents = {

@@ -12,7 +12,7 @@ export default function RootLayout() {
           name="index" 
           options={{ 
             title: "Finance Tracker", 
-            headerShown: false, // Hide header on the index screen since it redirects
+            headerShown: false,
           }} 
         />
         <Stack.Screen 
@@ -54,6 +54,13 @@ export default function RootLayout() {
           options={{ 
             title: "Categories",
             headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="screens/ScanScreen" 
+          options={{ 
+            title: "Scan Receipts",
+            headerShown: false, // Esta línea oculta el header por defecto
           }} 
         />
         <Stack.Screen 
