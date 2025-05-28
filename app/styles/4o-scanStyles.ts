@@ -343,17 +343,7 @@ export const styles = StyleSheet.create({
   
   // Scan Action Section - UPDATED for CoolScanButton
   scanActionSection: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: 'center', // Center the cool button
+
   },
   
   // Progress Section - UPDATED

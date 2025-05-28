@@ -148,9 +148,7 @@ export default function ScanScreen() {
               {/* Progress text (optional, since the button now has its own progress) */}
               {scanning && (
                 <View style={styles.progressSection}>
-                  <Text style={styles.progressText}>
-                    Processing {images.length} image{images.length !== 1 ? 's' : ''}...
-                  </Text>
+
                 </View>
               )}
             </View>
@@ -180,18 +178,7 @@ export default function ScanScreen() {
             </View>
           )}
 
-          {/* Empty State */}
-          {images.length === 0 && !scanning && (
-            <View style={styles.emptyStateSection}>
-              <View style={styles.emptyStateIcon}>
-                <Ionicons name="camera-outline" size={64} color="#ccc" />
-              </View>
-              <Text style={styles.emptyStateTitle}>No Images Selected</Text>
-              <Text style={styles.emptyStateSubtitle}>
-                Tap the + button above to start scanning your receipts
-              </Text>
-            </View>
-          )}
+
         </ScrollView>
       </View>
     </View>

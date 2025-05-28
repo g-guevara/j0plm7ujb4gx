@@ -192,19 +192,19 @@ const CoolScanButton: React.FC<CoolScanButtonProps> = ({
         <View style={styles.buttonContent}>
           <Animated.View style={[StyleSheet.absoluteFill, gradientAnimatedStyle]}>
             <Svg height="100%" width="100%" style={StyleSheet.absoluteFill}>
-              <Defs>
-                <LinearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <Stop offset="0%" stopColor="#007aff" />
-                  <Stop offset="25%" stopColor="#0a84ff" />
-                  <Stop offset="75%" stopColor="#66aaff" />
-                  <Stop offset="100%" stopColor="#cce6ff" />
-                </LinearGradient>
-                <LinearGradient id="scanningOverlay" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <Stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
-                  <Stop offset="50%" stopColor="rgba(255,255,255,0.3)" />
-                  <Stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
-                </LinearGradient>
-              </Defs>
+<Defs>
+  <LinearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <Stop offset="0%" stopColor="#007aff" />
+    <Stop offset="100%" stopColor="#007aff" />
+  </LinearGradient>
+  <LinearGradient id="scanningOverlay" x1="0%" y1="0%" x2="100%" y2="0%">
+    <Stop offset="0%" stopColor="#007aff" />
+    <Stop offset="100%" stopColor="#007aff" />
+  </LinearGradient>
+</Defs>
+
+
+
               <Rect x="0" y="0" width="100%" height="100%" rx="32" fill="url(#mainGradient)" />
               {scanning && (
                 <Rect
