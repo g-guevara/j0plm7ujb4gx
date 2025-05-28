@@ -2,14 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
-    Easing,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     borderWidth: 0,
     borderColor: "transparent",
+    marginBottom:20,
   },
   buttonDisabled: {
     opacity: 0.6,
