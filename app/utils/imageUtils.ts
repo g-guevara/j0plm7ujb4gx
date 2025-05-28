@@ -71,9 +71,9 @@ export const processTransactions = (
   transactions: any[], 
   addLog: (message: string) => void
 ): PartialTransaction[] => {
-  // Añadir selección y categorías
+  // Procesar transacciones con las categorías ya asignadas por OpenAI
   return transactions.map((transaction, index) => {
-    addLog(`Procesando transacción #${index + 1}`);
+    addLog(`Procesando transacción #${index + 1}: ${transaction.name || 'Sin nombre'}`);
     
     // Asegurar todos los campos necesarios
     const t = {
@@ -85,27 +85,36 @@ export const processTransactions = (
       cardId: transaction.cardId // Preserve cardId if it exists
     };
     
-    // Añadir categoría si no existe
+    // Si OpenAI ya asignó una categoría, mantenerla; si no, usar lógica de respaldo
     if (!t.category) {
-      addLog(`Asignando categoría para transacción #${index + 1}`);
+      addLog(`No se asignó categoría por OpenAI, aplicando lógica de respaldo para transacción #${index + 1}`);
       const name = t.name.toLowerCase();
       
-      if (name.includes('uber') || name.includes('trip')) {
-        t.category = "Transporte";
-      } else if (name.includes('copec')) {
-        t.category = "Combustible";
-      } else if (name.includes('apple') || name.includes('.com')) {
-        t.category = "Suscripciones";
-      } else if (name.includes('traspaso a:') || name.includes('transferencia a')) {
-        t.category = "Transferencias";
-      } else if (name.includes('traspaso de:') || name.includes('transferencia de')) {
-        t.category = "Ingresos";
-      } else if (name.includes('pago:')) {
-        t.category = "Pagos";
+      // Lógica de respaldo simple (estas deberían ser raras ya que OpenAI debería asignar categorías)
+      if (name.includes('uber') || name.includes('trip') || name.includes('taxi') || name.includes('metro')) {
+        t.category = "Transportation";
+      } else if (name.includes('copec') || name.includes('gas') || name.includes('combustible')) {
+        t.category = "Transportation";
+      } else if (name.includes('apple') || name.includes('.com') || name.includes('netflix') || name.includes('spotify')) {
+        t.category = "Life and Entertainment";
+      } else if (name.includes('supermercado') || name.includes('grocery') || name.includes('food')) {
+        t.category = "Food";
+      } else if (name.includes('farmacia') || name.includes('doctor') || name.includes('hospital')) {
+        t.category = "Health";
+      } else if (name.includes('rent') || name.includes('arriendo') || name.includes('housing')) {
+        t.category = "Housing";
+      } else if (name.includes('traspaso a:') || name.includes('transferencia a') || name.includes('pago:')) {
+        t.category = "Financial Expenses";
+      } else if (name.includes('traspaso de:') || name.includes('transferencia de') || name.includes('income')) {
+        t.category = "Income";
+      } else if (name.includes('shopping') || name.includes('tienda') || name.includes('store')) {
+        t.category = "Shopping";
       } else {
-        t.category = "Otros";
+        t.category = "Others";
       }
-      addLog(`Categoría asignada: ${t.category}`);
+      addLog(`Categoría de respaldo asignada: ${t.category}`);
+    } else {
+      addLog(`Categoría ya asignada por OpenAI: ${t.category}`);
     }
     
     return t;

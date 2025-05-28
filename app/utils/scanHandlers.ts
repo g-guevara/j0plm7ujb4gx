@@ -1,5 +1,6 @@
 // app/utils/scanHandlers.ts
 import { Alert } from "react-native";
+import { getAllCategories } from "../services/storage";
 import { PartialTransaction, pickImages, processTransactions } from "./imageUtils";
 import { callOpenAI, extractTransactionsFromResponse, prepareImageBase64 } from "./openiaService";
 import { saveApiKey } from "./secureStorage";
@@ -81,11 +82,19 @@ export const processImage = async (
 ): Promise<PartialTransaction[]> => {
   addLog(`Procesando imagen: ${image.substring(0, 30)}...`);
   
+  // Obtener categorías disponibles del almacenamiento
+  addLog("Obteniendo categorías disponibles del almacenamiento...");
+  const availableCategories = getAllCategories();
+  addLog(`Categorías cargadas: ${availableCategories.length} categorías`);
+  availableCategories.forEach(cat => {
+    addLog(`- ${cat.name} (${cat.icon})`);
+  });
+  
   // Convertir imagen a base64
   const base64Image = await prepareImageBase64(image, addLog);
   
-  // Llamar a OpenAI
-  const { responseText, status, ok } = await callOpenAI(base64Image, apiKey, addLog);
+  // Llamar a OpenAI con las categorías disponibles
+  const { responseText, status, ok } = await callOpenAI(base64Image, apiKey, addLog, availableCategories);
   
   if (!ok) {
     addLog(`ERROR: Respuesta no exitosa (status ${status})`);
@@ -113,8 +122,8 @@ export const processImage = async (
   const content = data.choices[0].message.content;
   addLog(`Contenido de la respuesta: ${content.substring(0, 100)}...`);
   
-  // Intentar extraer transacciones
-  const extractedTransactions = extractTransactionsFromResponse(content, addLog);
+  // Intentar extraer transacciones con validación de categorías
+  const extractedTransactions = extractTransactionsFromResponse(content, addLog, availableCategories);
   
   // Verificar resultados
   if (!Array.isArray(extractedTransactions) || extractedTransactions.length === 0) {
@@ -130,12 +139,14 @@ export const processImage = async (
       cardId: cardId 
     };
     
+    addLog(`Transacción extraída: ${transaction.name} - Categoría: ${transaction.category} - Monto: ${transaction.mount}`);
+    
     // Apply name/category mapping if available
     if (transaction.name) {
       try {
         const mappedData = await applyTransactionMapping({
           name: transaction.name,
-          category: transaction.category || "Otros"
+          category: transaction.category || "Others"
         });
         
         if (mappedData.wasModified) {
@@ -147,6 +158,13 @@ export const processImage = async (
         // If mapping fails, just continue with original values
         addLog(`Aviso: No se pudo aplicar mapeo para "${transaction.name}"`);
       }
+    }
+    
+    // Validar que la categoría final sea válida
+    const categoryNames = availableCategories.map(cat => cat.name);
+    if (!categoryNames.includes(processedTransaction.category)) {
+      addLog(`Categoría final "${processedTransaction.category}" no válida, cambiando a "Others"`);
+      processedTransaction.category = "Others";
     }
     
     processedTransactions.push(processedTransaction);
@@ -194,6 +212,10 @@ export const scanAllTransactions = async (
     addLog("ADVERTENCIA: No hay tarjeta seleccionada para las transacciones");
   }
 
+  // Log available categories
+  const availableCategories = getAllCategories();
+  addLog(`Sistema iniciado con ${availableCategories.length} categorías disponibles`);
+
   setScanning(true);
   addLog("Estado scanning establecido a true");
   setProgress(0);
@@ -230,6 +252,19 @@ export const scanAllTransactions = async (
     }
     
     addLog(`Total de transacciones extraídas: ${allTransactions.length}`);
+    
+    // Log categorías asignadas
+    const categoryCounts: { [key: string]: number } = {};
+    allTransactions.forEach(t => {
+      const category = t.category || "Sin categoría";
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+    
+    addLog("=== RESUMEN DE CATEGORÍAS ASIGNADAS ===");
+    Object.entries(categoryCounts).forEach(([category, count]) => {
+      addLog(`${category}: ${count} transacciones`);
+    });
+    
     setScannedTransactions(allTransactions);
     
     // Mostrar resumen de escaneo

@@ -1,16 +1,52 @@
 import * as FileSystem from "expo-file-system";
+import { Category } from "../data/sampleData";
 
-// Function to send a request to OpenAI with an image
-export const callOpenAI = async (base64Image: string, apiKey: string, addLog: (message: string) => void) => {
+// Function to send a request to OpenAI with an image and available categories
+export const callOpenAI = async (
+  base64Image: string, 
+  apiKey: string, 
+  addLog: (message: string) => void,
+  availableCategories: Category[] = []
+) => {
   addLog("-------- ENVIANDO SOLICITUD A OPENAI --------");
   addLog("URL: https://api.openai.com/v1/chat/completions");
   addLog("Método: POST");
   
-  // Preparar los datos para la API de OpenAI con un prompt más simple y directo
-  const prompt = "Observa esta foto y extrae todas las transacciones. Para cada transacción, dame fecha, nombre y monto. Devuelve un array JSON con este formato exacto: [{\"date\":\"YYYY-MM-DD\",\"name\":\"Nombre de transacción\",\"mount\":NUMERO}]. El monto debe ser un número sin símbolos. Si es un gasto, el número es positivo. Si es un ingreso, el número es negativo. IMPORTANTE: devuelve SOLO el array JSON sin texto adicional.";
-  addLog(`Prompt: ${prompt}`);
+  // Crear lista de categorías disponibles para el prompt
+  const categoryList = availableCategories.map(cat => cat.name).join(", ");
+  addLog(`Categorías disponibles: ${categoryList}`);
   
-  // Usar el modelo gpt-4o en lugar de gpt-4-vision-preview que está descontinuado
+  // Prompt mejorado que incluye las categorías disponibles
+  const prompt = `Observa esta foto y extrae todas las transacciones. Para cada transacción, dame fecha, nombre, monto y categoría.
+
+CATEGORÍAS DISPONIBLES: ${categoryList}
+
+Para cada transacción:
+1. Analiza el nombre/descripción de la transacción
+2. Asigna la categoría más apropiada de la lista disponible
+3. Si no encuentras una categoría que coincida significativamente, usa "Others"
+
+Ejemplos de asignación:
+- "Uber", "Taxi", "Metro" → Transportation
+- "Supermercado", "Grocery" → Food
+- "Netflix", "Spotify" → Life and Entertainment
+- "Farmacia", "Doctor" → Health
+- "Renta", "Arriendo" → Housing
+- Si no hay coincidencia clara → Others
+
+Devuelve un array JSON con este formato exacto:
+[{"date":"YYYY-MM-DD","name":"Nombre de transacción","mount":NUMERO,"category":"CATEGORIA"}]
+
+REGLAS:
+- El monto debe ser un número sin símbolos
+- Si es un gasto, el número es positivo
+- Si es un ingreso, el número es negativo
+- La categoría debe ser exactamente una de la lista disponible o "Others"
+- IMPORTANTE: devuelve SOLO el array JSON sin texto adicional`;
+
+  addLog(`Prompt: ${prompt.substring(0, 200)}...`);
+  
+  // Usar el modelo gpt-4o
   const payload = {
     model: "gpt-4o",
     messages: [
@@ -22,7 +58,7 @@ export const callOpenAI = async (base64Image: string, apiKey: string, addLog: (m
         ]
       }
     ],
-    max_tokens: 1000
+    max_tokens: 1500
   };
   
   addLog(`Modelo utilizado: ${payload.model}`);
@@ -40,7 +76,7 @@ export const callOpenAI = async (base64Image: string, apiKey: string, addLog: (m
     
     addLog(`Respuesta recibida. Status: ${response.status}`);
     const responseText = await response.text();
-    addLog(`Respuesta (primeros 500 caracteres): ${responseText.substring(0, 1000)}...`);
+    addLog(`Respuesta (primeros 500 caracteres): ${responseText.substring(0, 500)}...`);
     
     return { responseText, status: response.status, ok: response.ok };
   } catch (error: any) {
@@ -65,7 +101,11 @@ export const prepareImageBase64 = async (imageUri: string, addLog: (message: str
 };
 
 // Extraer transacciones de la respuesta de OpenAI
-export const extractTransactionsFromResponse = (content: string, addLog: (message: string) => void) => {
+export const extractTransactionsFromResponse = (
+  content: string, 
+  addLog: (message: string) => void,
+  availableCategories: Category[] = []
+) => {
   let extractedTransactions = [];
   
   // Intento 1: Parsear contenido directamente como JSON
@@ -73,7 +113,6 @@ export const extractTransactionsFromResponse = (content: string, addLog: (messag
     addLog("Intento #1: Parsear contenido directamente");
     extractedTransactions = JSON.parse(content);
     addLog("Parseo directo exitoso");
-    return extractedTransactions;
   } catch (error: any) {
     addLog(`Parseo directo falló: ${error.message}`);
     
@@ -86,7 +125,6 @@ export const extractTransactionsFromResponse = (content: string, addLog: (messag
       try {
         extractedTransactions = JSON.parse(arrayMatch[0]);
         addLog("Parseo de coincidencia exitoso");
-        return extractedTransactions;
       } catch (error2: any) {
         addLog(`Parseo de coincidencia falló: ${error2.message}`);
         throw error2;
@@ -96,4 +134,24 @@ export const extractTransactionsFromResponse = (content: string, addLog: (messag
       throw new Error("No se pudo extraer JSON de la respuesta");
     }
   }
+
+  // Validar y limpiar categorías
+  const categoryNames = availableCategories.map(cat => cat.name);
+  categoryNames.push("Others"); // Asegurar que "Others" esté disponible
+  
+  extractedTransactions = extractedTransactions.map((transaction: any, index: number) => {
+    addLog(`Validando transacción #${index + 1}: ${transaction.name || 'Sin nombre'}`);
+    
+    // Validar categoría
+    if (!transaction.category || !categoryNames.includes(transaction.category)) {
+      addLog(`Categoría "${transaction.category}" no válida, asignando "Others"`);
+      transaction.category = "Others";
+    } else {
+      addLog(`Categoría "${transaction.category}" válida`);
+    }
+    
+    return transaction;
+  });
+  
+  return extractedTransactions;
 };
