@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { View } from "react-native";
 import { Transaction } from "../../data/sampleData";
+import { getAllCategories } from "../../services/storage";
 import { styles } from "../../styles/transactionStyles";
 
 /**
@@ -18,7 +19,7 @@ export const formatCurrency = (amount: number) => {
 };
 
 /**
- * Get appropriate icon name based on transaction category
+ * Get appropriate icon name based on transaction category from storage
  */
 export const getCategoryIcon = (category: string) => {
   // Ensure category is a valid string
@@ -26,6 +27,20 @@ export const getCategoryIcon = (category: string) => {
     return 'cube-outline'; // Default icon
   }
   
+  // Get all categories from storage
+  const categories = getAllCategories();
+  
+  // Find the category in storage (case insensitive)
+  const foundCategory = categories.find(
+    cat => cat.name.toLowerCase() === category.toLowerCase()
+  );
+  
+  // If found in storage, use that icon
+  if (foundCategory && foundCategory.icon) {
+    return foundCategory.icon;
+  }
+  
+  // Fallback to hardcoded mapping for backward compatibility
   let iconName;
   
   switch (category.toLowerCase()) {
@@ -53,6 +68,37 @@ export const getCategoryIcon = (category: string) => {
     case 'healthcare':
       iconName = 'medical-outline';
       break;
+    case 'health':
+      iconName = 'medical-outline';
+      break;
+    case 'food':
+      iconName = 'restaurant-outline';
+      break;
+    case 'housing':
+      iconName = 'home-outline';
+      break;
+    case 'life and entertainment':
+    case 'entertainment':
+      iconName = 'film-outline';
+      break;
+    case 'financial expenses':
+      iconName = 'receipt-outline';
+      break;
+    case 'income':
+      iconName = 'trending-up-outline';
+      break;
+    case 'clothes':
+      iconName = 'shirt-outline';
+      break;
+    case 'software':
+      iconName = 'code-outline';
+      break;
+    case 'investments':
+      iconName = 'trending-up';
+      break;
+    case 'others':
+      iconName = 'cube-outline';
+      break;
     default:
       iconName = 'cube-outline';
       break;
@@ -61,28 +107,91 @@ export const getCategoryIcon = (category: string) => {
   return iconName;
 };
 
-export const renderTransactionIcon = (category: string) => {
-  const iconName = getCategoryIcon(category);
+/**
+ * Get appropriate color based on transaction category from storage
+ */
+export const getCategoryColor = (category: string) => {
+  // Ensure category is a valid string
+  if (!category || typeof category !== 'string') {
+    return '#3498db'; // Default blue
+  }
+  
+  // Get all categories from storage
+  const categories = getAllCategories();
+  
+  // Find the category in storage (case insensitive)
+  const foundCategory = categories.find(
+    cat => cat.name.toLowerCase() === category.toLowerCase()
+  );
+  
+  // If found in storage, use that color
+  if (foundCategory && foundCategory.color) {
+    return foundCategory.color;
+  }
+  
+  // Fallback to hardcoded mapping for backward compatibility
   let backgroundColor = "#3498db"; // Default blue
   
-  // Customize icon color based on category
+  // Customize color based on category
   switch((category || '').toLowerCase()) {
     case 'groceries':
+    case 'food':
       backgroundColor = "#2ecc71"; // Green
       break;
     case 'rent':
+    case 'housing':
       backgroundColor = "#f39c12"; // Orange
       break;
     case 'insurance':
       backgroundColor = "#f1c40f"; // Yellow
       break;
     case 'bills':
+    case 'financial expenses':
       backgroundColor = "#e74c3c"; // Red
       break;
     case 'entertainment':
+    case 'life and entertainment':
       backgroundColor = "#9b59b6"; // Purple
       break;
+    case 'transportation':
+      backgroundColor = "#3498db"; // Blue
+      break;
+    case 'dining':
+      backgroundColor = "#e67e22"; // Dark orange
+      break;
+    case 'shopping':
+      backgroundColor = "#1abc9c"; // Teal
+      break;
+    case 'healthcare':
+    case 'health':
+      backgroundColor = "#2980b9"; // Dark blue
+      break;
+    case 'income':
+      backgroundColor = "#2ecc71"; // Green
+      break;
+    case 'clothes':
+      backgroundColor = "#74b9ff"; // Sky blue
+      break;
+    case 'software':
+      backgroundColor = "#8e44ad"; // Dark purple
+      break;
+    case 'investments':
+      backgroundColor = "#16a085"; // Dark teal
+      break;
+    case 'others':
+      backgroundColor = "#00cec9"; // Cyan
+      break;
+    default:
+      backgroundColor = "#3498db"; // Default blue
+      break;
   }
+  
+  return backgroundColor;
+};
+
+export const renderTransactionIcon = (category: string) => {
+  const iconName = getCategoryIcon(category);
+  const backgroundColor = getCategoryColor(category);
   
   return (
     <View style={[styles.transactionIcon, { backgroundColor }]}>
