@@ -341,7 +341,7 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
   },
   
-  // Scan Action Section
+  // Scan Action Section - UPDATED for CoolScanButton
   scanActionSection: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -353,7 +353,23 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    alignItems: 'center', // Center the cool button
   },
+  
+  // Progress Section - UPDATED
+  progressSection: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  progressText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+    fontStyle: 'italic',
+  },
+  
+  // SCAN BUTTON STYLES - Kept for ScanScreenComponents compatibility
   scanButton: {
     backgroundColor: "#3498db",
     flexDirection: 'row',
@@ -379,11 +395,6 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  
-  // Progress Section
-  progressSection: {
-    marginTop: 16,
-  },
   progressContainer: {
     height: 8,
     backgroundColor: "#e9ecef",
@@ -394,12 +405,6 @@ export const styles = StyleSheet.create({
   progressBar: {
     height: "100%",
     backgroundColor: "#3498db",
-  },
-  progressText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
   },
   
   // Results Section

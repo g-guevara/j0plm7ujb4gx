@@ -79,7 +79,9 @@ export default function ProfileScreen() {
           
           <View style={styles.profileOptions}>
             {/* Currency Selection Option */}
-            <ProfileOption 
+
+            
+            {/* <ProfileOption 
               icon="cash-outline"
               text="Currency"
               onPress={() => setShowCurrencyModal(true)}
@@ -88,7 +90,7 @@ export default function ProfileScreen() {
                   <Text style={styles.currencyBadgeText}>{selectedCurrency}</Text>
                 </View>
               }
-            />
+            /> */}
             
             {/* Categories Option */}
             <ProfileOption 

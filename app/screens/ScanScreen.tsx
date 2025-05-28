@@ -2,16 +2,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import CoolScanButton from "../components/CoolScanButton";
+import { ScanScreenComponents } from "../components/ScanScreenComponents";
 import { cardData } from "../data/sampleData";
 import { styles } from "../styles/4o-scanStyles";
 import { PartialTransaction } from "../utils/imageUtils";
 import { handleApiKeySave, handlePickImages, scanAllTransactions } from "../utils/scanHandlers";
-import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggleTransaction } from "../utils/transactionHandlers";
-
-import { ScanScreenComponents } from "../components/ScanScreenComponents";
-
-// Import for useEffect to work
 import { DEFAULT_API_KEY, getApiKey, saveApiKey } from "../utils/secureStorage";
+import { formatAmount, getAmountStyle, saveTransactions, toggleSelectAll, toggleTransaction } from "../utils/transactionHandlers";
 
 export default function ScanScreen() {
   const router = useRouter();
@@ -127,14 +125,10 @@ export default function ScanScreen() {
             onAddImages={() => handlePickImages(addLog, setImages, setScannedTransactions, images.length)}
           />
 
-          {/* Scan Action Section */}
+          {/* Scan Action Section with Cool Button */}
           {images.length > 0 && (
             <View style={styles.scanActionSection}>
-              <TouchableOpacity
-                style={[
-                  styles.scanButton,
-                  (images.length === 0 || scanning) && styles.scanButtonDisabled
-                ]}
+              <CoolScanButton
                 onPress={() => scanAllTransactions(
                   images, 
                   apiKey, 
@@ -146,24 +140,17 @@ export default function ScanScreen() {
                   parseInt(cardId as string)
                 )}
                 disabled={images.length === 0 || scanning}
-              >
-                <Ionicons 
-                  name={scanning ? "hourglass-outline" : "scan-outline"} 
-                  size={20} 
-                  color="white" 
-                  style={styles.scanButtonIcon}
-                />
-                <Text style={styles.scanButtonText}>
-                  {scanning ? `Scanning... ${Math.round(progress)}%` : `Scan ${images.length} Image${images.length !== 1 ? 's' : ''}`}
-                </Text>
-              </TouchableOpacity>
+                scanning={scanning}
+                progress={progress}
+                imageCount={images.length}
+              />
               
+              {/* Progress text (optional, since the button now has its own progress) */}
               {scanning && (
                 <View style={styles.progressSection}>
-                  <View style={styles.progressContainer}>
-                    <View style={[styles.progressBar, { width: `${progress}%` }]} />
-                  </View>
-                  <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
+                  <Text style={styles.progressText}>
+                    Processing {images.length} image{images.length !== 1 ? 's' : ''}...
+                  </Text>
                 </View>
               )}
             </View>
