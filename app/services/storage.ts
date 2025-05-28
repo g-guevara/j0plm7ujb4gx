@@ -26,6 +26,7 @@ const DEFAULT_CARDS: Card[] = [
 
 
 
+
 const DEFAULT_CATEGORIES: Category[] = [
   {
     id: 1,
@@ -97,10 +98,9 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: 12,
     name: "Others",
     icon: "cube-outline",
-    color: "#00cec9" // Cyan
+    color: "#007aff" // Blue (Apple system blue)
   }
 ];
-
 /**
  * Initialize storage with default data if empty
  */

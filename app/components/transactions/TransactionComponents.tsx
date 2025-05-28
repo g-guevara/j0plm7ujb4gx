@@ -125,7 +125,7 @@ const SearchBar = ({
       style={transactionStyles.addButton}
       onPress={onScanPress}
     >
-      <Text style={transactionStyles.addButtonText}>+ Add file</Text>
+      <Text style={transactionStyles.addButtonText}>+ Add</Text>
     </TouchableOpacity>
   </View>
 );
