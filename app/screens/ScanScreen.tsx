@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import CoolScanButton from "../components/CoolScanButton";
 import { ScanScreenComponents } from "../components/ScanScreenComponents";
 import { cardData } from "../data/sampleData";
@@ -68,11 +68,11 @@ export default function ScanScreen() {
   return (
     <View style={styles.container}>
       {/* Background image */}
-      <Image
+      {/* <Image
         source={require('../../assets/images/dashboard-bg.png')}
         style={styles.background}
         resizeMode="cover"
-      />
+      /> */}
       
       <StatusBar barStyle="dark-content" />
       
