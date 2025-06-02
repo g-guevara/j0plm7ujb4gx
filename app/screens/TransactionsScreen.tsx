@@ -28,6 +28,11 @@ import { TransactionHandlers } from "../components/transactions/TransactionHandl
 
 // Create our own styles that won't conflict with transactionStyles
 const localStyles = StyleSheet.create({
+  // ✅ AGREGADO: Contenedor principal con fondo blanco explícito
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#FFFFFF", // Fondo blanco explícito
+  },
   background: {
     position: 'absolute',
     top: 0,
@@ -39,7 +44,7 @@ const localStyles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: 'transparent', // Make container transparent instead of white
+    backgroundColor: 'transparent', // Keep transparent to show the white background
     zIndex: 2,
   },
   // Empty state styles
@@ -276,7 +281,7 @@ export default function TransactionsScreen() {
   // Render empty state when no cards exist
   if (cards.length === 0) {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={localStyles.mainContainer}>
         {/* Background image */}
         <Image
           source={require('../../assets/images/dashboard-bg.png')}
@@ -325,7 +330,7 @@ export default function TransactionsScreen() {
 
   // Normal render when cards exist
   return (
-    <View style={{ flex: 1 }}>
+    <View style={localStyles.mainContainer}>
       {/* Background image - using dashboard-bg.png now */}
       <Image
         source={require('../../assets/images/dashboard-bg.png')}
