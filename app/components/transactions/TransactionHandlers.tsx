@@ -57,6 +57,13 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
       // Reload cards from storage to get updated selection
       const updatedCards = getAllCards();
       
+      if (updatedCards.length === 0) {
+        // No real cards exist, set empty array
+        setCards([]);
+        setTransactions([]);
+        return;
+      }
+      
       // Add "All" option and update state
       const allCardsOption: Card = {
         id: 0,
@@ -132,6 +139,26 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
 
   // Handle adding transaction manually
   const handleAddManually = () => {
+    // Check if there are any real cards (excluding "All" option)
+    const realCards = cards.filter(card => card.id !== 0);
+    
+    if (realCards.length === 0) {
+      Alert.alert(
+        "No Cards Available", 
+        "You need to create a card first before adding transactions.",
+        [
+          { text: "Cancel" },
+          { 
+            text: "Add Card", 
+            onPress: () => {
+              router.push("/screens/CardEditScreen");
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
     // Check if a card is selected before allowing manual entry
     const selectedCard = cards.find(card => card.selected);
     if (!selectedCard) {
@@ -166,6 +193,26 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
 
   // Navigate to scan screen (renamed from handleScanPress)
   const handleScanFiles = () => {
+    // Check if there are any real cards (excluding "All" option)
+    const realCards = cards.filter(card => card.id !== 0);
+    
+    if (realCards.length === 0) {
+      Alert.alert(
+        "No Cards Available", 
+        "You need to create a card first before scanning receipts.",
+        [
+          { text: "Cancel" },
+          { 
+            text: "Add Card", 
+            onPress: () => {
+              router.push("/screens/CardEditScreen");
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
     // Check if a card is selected before navigating to scan
     const selectedCard = cards.find(card => card.selected);
     if (!selectedCard) {

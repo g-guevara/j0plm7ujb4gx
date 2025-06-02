@@ -20,6 +20,7 @@ import {
   updateTransaction
 } from "../services/storage";
 
+import { Ionicons } from "@expo/vector-icons";
 import AddTransactionModal from "../components/transactions/AddTransactionModal";
 import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
 import { TransactionComponents } from "../components/transactions/TransactionComponents";
@@ -40,7 +41,52 @@ const localStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent', // Make container transparent instead of white
     zIndex: 2,
-  }
+  },
+  // Empty state styles
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 100,
+  },
+  emptyStateIcon: {
+    marginBottom: 24,
+  },
+  emptyStateTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyStateDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  addFirstCardButton: {
+    backgroundColor: '#3498db',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addFirstCardButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
 });
 
 export default function TransactionsScreen() {
@@ -84,26 +130,32 @@ export default function TransactionsScreen() {
       // Load cards from storage
       const storedCards = getAllCards();
       
-      // Add "All" card option to the beginning of the cards array
-      const allCardsOption: Card = {
-        id: 0,
-        name: "All",
-        color: "#555555",
-        selected: true // Default to "All" selected
-      };
-      
-      // Check if any card is actually selected, otherwise default to "All"
-      const hasSelectedCard = storedCards.some(card => card.selected);
-      const updatedCards = [
-        { ...allCardsOption, selected: !hasSelectedCard },
-        ...storedCards.map(card => ({
-          ...card,
-          selected: hasSelectedCard ? card.selected : false
-        }))
-      ];
-      
-      setCards(updatedCards);
-      console.log(`Loaded ${storedCards.length} cards from storage (plus "All" option)`);
+      if (storedCards.length === 0) {
+        // No cards exist - show empty state
+        setCards([]);
+        console.log("No cards found - showing empty state");
+      } else {
+        // Add "All" card option to the beginning of the cards array only if we have real cards
+        const allCardsOption: Card = {
+          id: 0,
+          name: "All",
+          color: "#555555",
+          selected: true // Default to "All" selected
+        };
+        
+        // Check if any card is actually selected, otherwise default to "All"
+        const hasSelectedCard = storedCards.some(card => card.selected);
+        const updatedCards = [
+          { ...allCardsOption, selected: !hasSelectedCard },
+          ...storedCards.map(card => ({
+            ...card,
+            selected: hasSelectedCard ? card.selected : false
+          }))
+        ];
+        
+        setCards(updatedCards);
+        console.log(`Loaded ${storedCards.length} cards from storage (plus "All" option)`);
+      }
       
     } catch (error) {
       console.error("Error loading data from storage:", error);
@@ -208,6 +260,11 @@ export default function TransactionsScreen() {
     loadDataFromStorage();
   };
 
+  // Handle adding first card
+  const handleAddFirstCard = () => {
+    router.push("/screens/CardEditScreen");
+  };
+
   // Load all transactions and cards when the screen gains focus
   useFocusEffect(
     useCallback(() => {
@@ -216,6 +273,57 @@ export default function TransactionsScreen() {
     }, [loadDataFromStorage])
   );
 
+  // Render empty state when no cards exist
+  if (cards.length === 0) {
+    return (
+      <View style={{ flex: 1 }}>
+        {/* Background image */}
+        <Image
+          source={require('../../assets/images/dashboard-bg.png')}
+          style={localStyles.background}
+          resizeMode="cover"
+        />
+        
+        <View style={localStyles.contentContainer}>
+          <StatusBar barStyle="dark-content" />
+          
+          {/* Header / Title */}
+          <View style={transactionStyles.headerContainer}>
+            <Text style={transactionStyles.headerTitle}>Wallet</Text>
+            <TouchableOpacity 
+              style={transactionStyles.editCardsButton}
+              onPress={() => router.push("/screens/CardEditScreen")}
+            >
+              <Text style={transactionStyles.editCardsButtonText}>Edit Cards</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Empty State */}
+          <View style={localStyles.emptyStateContainer}>
+            <View style={localStyles.emptyStateIcon}>
+              <Ionicons name="card-outline" size={80} color="#ccc" />
+            </View>
+            
+            <Text style={localStyles.emptyStateTitle}>No Cards Yet</Text>
+            
+            <Text style={localStyles.emptyStateDescription}>
+              Create your first card to start tracking your expenses and managing your finances.
+            </Text>
+            
+            <TouchableOpacity 
+              style={localStyles.addFirstCardButton}
+              onPress={handleAddFirstCard}
+            >
+              <Ionicons name="add" size={20} color="white" />
+              <Text style={localStyles.addFirstCardButtonText}>Add Your First Card</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Normal render when cards exist
   return (
     <View style={{ flex: 1 }}>
       {/* Background image - using dashboard-bg.png now */}

@@ -8,24 +8,8 @@ const CARDS_STORAGE_KEY = 'finance_tracker_cards';
 const CATEGORIES_STORAGE_KEY = 'finance_tracker_categories';
 const SELECTED_CARD_KEY = 'finance_tracker_selected_card';
 
-// Default cards to create if no cards exist
-const DEFAULT_CARDS: Card[] = [
-  {
-    id: 1,
-    name: "Personal Card",
-    color: "#3498db",
-    selected: true
-  },
-  {
-    id: 2, 
-    name: "Business Card",
-    color: "#2ecc71",
-    selected: false
-  }
-];
-
-
-
+// No default cards - start with empty array
+const DEFAULT_CARDS: Card[] = [];
 
 const DEFAULT_CATEGORIES: Category[] = [
   {
@@ -101,6 +85,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     color: "#007aff" // Blue (Apple system blue)
   }
 ];
+
 /**
  * Initialize storage with default data if empty
  */
@@ -109,16 +94,16 @@ export const initializeStorage = async (): Promise<void> => {
     // Check if cards exist
     const existingCards = await AsyncStorage.getItem(CARDS_STORAGE_KEY);
     
-    // If no cards exist, create default cards
-    if (!existingCards) {
-      console.log('No cards found, creating default cards');
-      await AsyncStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(DEFAULT_CARDS));
-      cardData.push(...DEFAULT_CARDS);
-    } else {
+    if (existingCards) {
       // Load existing cards into memory
       const cards = JSON.parse(existingCards);
       cardData.length = 0; // Clear the array
       cardData.push(...cards);
+      console.log(`Loaded ${cards.length} existing cards`);
+    } else {
+      // Start with no cards - user will need to add them
+      cardData.length = 0;
+      console.log('No cards found, starting with empty card list');
     }
     
     // Check if categories exist
@@ -144,10 +129,12 @@ export const initializeStorage = async (): Promise<void> => {
       transactionData.push(...transactions);
     }
     
-    // Load selected card
-    const selectedCardId = await AsyncStorage.getItem(SELECTED_CARD_KEY);
-    if (selectedCardId) {
-      selectCard(parseInt(selectedCardId, 10));
+    // Only load selected card if there are cards available
+    if (cardData.length > 0) {
+      const selectedCardId = await AsyncStorage.getItem(SELECTED_CARD_KEY);
+      if (selectedCardId) {
+        selectCard(parseInt(selectedCardId, 10));
+      }
     }
     
     console.log(`Loaded ${cardData.length} cards, ${categoryData.length} categories, and ${transactionData.length} transactions`);
@@ -453,7 +440,7 @@ export const addNewCard = async (name: string, color: string): Promise<Card> => 
     id: newId,
     name,
     color,
-    selected: false
+    selected: cardData.length === 0 // Auto-select if this is the first card
   };
   
   // Add to memory array
@@ -461,6 +448,11 @@ export const addNewCard = async (name: string, color: string): Promise<Card> => 
   
   // Save to storage
   await saveAllCards();
+  
+  // If this is the first card, save it as selected
+  if (cardData.length === 1) {
+    await AsyncStorage.setItem(SELECTED_CARD_KEY, newId.toString());
+  }
   
   // Return the new card
   return newCard;
