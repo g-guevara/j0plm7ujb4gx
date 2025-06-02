@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -9,24 +9,8 @@ import {
   View
 } from "react-native";
 
-
-import { Transaction } from "../../data/sampleData";
-
-// Available categories with their icon names
-const CATEGORIES = [
-  { name: "Groceries", icon: "cart-outline", color: "#2ecc71" },
-  { name: "Rent", icon: "home-outline", color: "#f39c12" },
-  { name: "Bills", icon: "receipt-outline", color: "#e74c3c" },
-  { name: "Transportation", icon: "car-outline", color: "#3498db" },
-  { name: "Dining", icon: "restaurant-outline", color: "#9b59b6" },
-  { name: "Shopping", icon: "bag-outline", color: "#1abc9c" },
-  { name: "Healthcare", icon: "medical-outline", color: "#34495e" },
-  { name: "Entertainment", icon: "film-outline", color: "#e67e22" },
-  { name: "Insurance", icon: "shield-outline", color: "#f1c40f" },
-  { name: "Education", icon: "school-outline", color: "#8e44ad" },
-  { name: "Fitness", icon: "fitness-outline", color: "#2980b9" },
-  { name: "Travel", icon: "airplane-outline", color: "#16a085" }
-];
+import { Category, Transaction } from "../../data/sampleData";
+import { getAllCategories } from "../../services/storage";
 
 interface CategorySelectionModalProps {
   visible: boolean;
@@ -41,8 +25,23 @@ const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
   onClose,
   onSelectCategory
 }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load categories when the modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      loadCategories();
+    }
+  }, [visible]);
+
+  const loadCategories = () => {
+    // Get categories from storage (user's categories)
+    const userCategories = getAllCategories();
+    setCategories(userCategories);
+  };
+
   // Render category item
-  const renderCategoryItem = ({ item }: { item: typeof CATEGORIES[0] }) => (
+  const renderCategoryItem = ({ item }: { item: Category }) => (
     <TouchableOpacity
       style={styles.categoryItem}
       onPress={() => {
@@ -80,17 +79,33 @@ const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
             </Text>
           )}
           
-          <FlatList
-            data={CATEGORIES}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.name}
-            numColumns={3}
-            contentContainerStyle={styles.categoriesList}
-          />
+          {categories.length > 0 ? (
+            <FlatList
+              data={categories}
+              renderItem={renderCategoryItem}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={3}
+              contentContainerStyle={styles.categoriesList}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No categories available</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Add categories in Profile → Categories
+              </Text>
+            </View>
+          )}
           
-          <TouchableOpacity style={styles.addCategoryButton}>
+          <TouchableOpacity 
+            style={styles.addCategoryButton}
+            onPress={() => {
+              // Close this modal and optionally navigate to categories screen
+              onClose();
+              // Note: You could add navigation to categories screen here if needed
+            }}
+          >
             <Ionicons name="add-circle" size={20} color="white" style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>Add Category</Text>
+            <Text style={styles.buttonText}>Manage Categories</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -153,6 +168,22 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 12,
     color: "#333",
+    textAlign: "center",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: "#999",
     textAlign: "center",
   },
   addCategoryButton: {

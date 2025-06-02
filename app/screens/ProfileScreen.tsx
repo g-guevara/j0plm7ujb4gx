@@ -56,7 +56,7 @@ export default function ProfileScreen() {
         {/* Profile content */}
         <View style={styles.profileContainer}>
           <View style={styles.avatarContainer}>
-            <Ionicons name="person-circle" size={120} color="#3498db" />
+            <Ionicons name="person-circle" size={120} color="#000" />
           </View>
           
           <Text style={styles.name}>Settings</Text>
