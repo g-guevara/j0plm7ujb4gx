@@ -20,6 +20,7 @@ import {
   updateTransaction
 } from "../services/storage";
 
+import AddTransactionModal from "../components/transactions/AddTransactionModal";
 import CategorySelectionModal from "../components/transactions/CategorySelectionModal";
 import { TransactionComponents } from "../components/transactions/TransactionComponents";
 import { TransactionHandlers } from "../components/transactions/TransactionHandlers";
@@ -47,6 +48,7 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
   const [showAddCardModal, setShowAddCardModal] = useState(false);
+  const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [newCardName, setNewCardName] = useState("");
   const [newCardColor, setNewCardColor] = useState("#3498db");
   const [searchQuery, setSearchQuery] = useState("");
@@ -181,6 +183,31 @@ export default function TransactionsScreen() {
     }
   };
 
+  // Handle manual transaction addition
+  const handleAddManually = () => {
+    // Check if a card is selected before allowing manual entry
+    const selectedCard = cards.find(card => card.selected);
+    if (!selectedCard) {
+      Alert.alert("No Card Selected", "Please select a card before adding a transaction");
+      return;
+    }
+    
+    // If "All" is selected, ask the user to select a specific card
+    if (selectedCard.id === 0) {
+      Alert.alert("Select a Specific Card", "Please select a specific card before adding a transaction");
+      return;
+    }
+    
+    // Open the add transaction modal
+    setShowAddTransactionModal(true);
+  };
+
+  // Handle transaction added callback
+  const handleTransactionAdded = () => {
+    // Reload data from storage to show the new transaction
+    loadDataFromStorage();
+  };
+
   // Load all transactions and cards when the screen gains focus
   useFocusEffect(
     useCallback(() => {
@@ -222,7 +249,8 @@ export default function TransactionsScreen() {
         <TransactionComponents.SearchBar 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onScanPress={handlers.handleScanPress}
+          onAddManually={handleAddManually}
+          onScanFiles={handlers.handleScanFiles}
         />
         
         <TransactionComponents.TransactionsList 
@@ -252,6 +280,14 @@ export default function TransactionsScreen() {
             setSelectedTransaction(null);
           }}
           onSelectCategory={handleCategorySelect}
+        />
+
+        {/* Add Transaction Modal */}
+        <AddTransactionModal
+          visible={showAddTransactionModal}
+          onClose={() => setShowAddTransactionModal(false)}
+          cards={cards}
+          onTransactionAdded={handleTransactionAdded}
         />
       </View>
     </View>

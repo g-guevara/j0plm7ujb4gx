@@ -30,8 +30,8 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#55b4fe",
-
   },
+  
   // Cards Section
   cardsSection: {
     marginVertical: 10,
@@ -57,12 +57,14 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
+  
   // Search Bar
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
     marginVertical: 10,
+    position: "relative", // Added for dropdown positioning
   },
   searchBar: {
     flex: 1,
@@ -86,13 +88,65 @@ export const styles = StyleSheet.create({
     backgroundColor: "#000000",
     borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 25,
+    flexDirection: "row", // Added for icon alignment
+    alignItems: "center", // Added for icon alignment
   },
   addButtonText: {
     color: "#FFFFFF",
     fontWeight: "500",
     fontSize: 14,
   },
+
+  // Dropdown Styles
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "flex-start",
+    paddingTop: 180, // Adjust based on your search bar position
+    paddingHorizontal: 15,
+  },
+  dropdownContent: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    marginLeft: "auto", // Align to the right side like the button
+    width: 280,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  dropdownOptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f8f9fa",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  dropdownOptionContent: {
+    flex: 1,
+  },
+  dropdownOptionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 2,
+  },
+  dropdownOptionDescription: {
+    fontSize: 13,
+    color: "#666",
+  },
+  
   // Transactions List
   transactionsList: {
     paddingBottom: 20,
@@ -164,6 +218,7 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#333333",
   },
+  
   // Modal Styles
   modalOverlay: {
     flex: 1,

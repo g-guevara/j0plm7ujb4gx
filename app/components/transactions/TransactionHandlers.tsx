@@ -130,8 +130,42 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
     }
   };
 
-  // Navigate to scan screen
-  const handleScanPress = () => {
+  // Handle adding transaction manually
+  const handleAddManually = () => {
+    // Check if a card is selected before allowing manual entry
+    const selectedCard = cards.find(card => card.selected);
+    if (!selectedCard) {
+      Alert.alert("No Card Selected", "Please select a card before adding a transaction");
+      return;
+    }
+    
+    // If "All" is selected, ask the user to select a specific card
+    if (selectedCard.id === 0) {
+      Alert.alert("Select a Specific Card", "Please select a specific card before adding a transaction");
+      return;
+    }
+    
+    // Navigate to a manual transaction entry screen or open a modal
+    // For now, we'll show an alert indicating the feature is coming
+    Alert.alert(
+      "Add Transaction Manually",
+      "This will open the manual transaction entry form.",
+      [
+        { text: "Cancel" },
+        { 
+          text: "Continue", 
+          onPress: () => {
+            // You can implement a modal here or navigate to a new screen
+            console.log("Opening manual transaction entry for card:", selectedCard.id);
+            // TODO: Implement manual transaction entry
+          }
+        }
+      ]
+    );
+  };
+
+  // Navigate to scan screen (renamed from handleScanPress)
+  const handleScanFiles = () => {
     // Check if a card is selected before navigating to scan
     const selectedCard = cards.find(card => card.selected);
     if (!selectedCard) {
@@ -156,6 +190,7 @@ export const TransactionHandlers = (props: TransactionHandlersProps) => {
     handleTransactionPress,
     handleCardSelect,
     handleAddCard,
-    handleScanPress
+    handleAddManually,
+    handleScanFiles
   };
 };

@@ -69,7 +69,6 @@ export function addCard(name: string, color: string): Card {
 
 // Function to add a transaction
 export function addTransaction(transaction: PartialTransaction): number {
-  // Create a new transaction with default values for missing fields
   const newTransaction: Transaction = {
     id: transaction.id || (transactionData.length > 0 ? Math.max(...transactionData.map(t => t.id)) + 1 : 1),
     date: transaction.date || new Date().toISOString().split('T')[0],
@@ -79,10 +78,7 @@ export function addTransaction(transaction: PartialTransaction): number {
     cardId: transaction.cardId
   };
 
-  // Add to the transactions array
   transactionData.push(newTransaction);
-  
-  // Return the ID of the new transaction
   return newTransaction.id;
 }
 
@@ -129,8 +125,13 @@ export function getCategoryByName(name: string): Category | undefined {
   return categoryData.find(cat => cat.name.toLowerCase() === name.toLowerCase());
 }
 
-// Export default to maintain compatibility with existing imports
-export default { 
+// ✅ NUEVA FUNCIÓN PARA OBTENER TODAS LAS CATEGORÍAS
+export function getAllCategories(): Category[] {
+  return categoryData;
+}
+
+// Export default (incluye getAllCategories también)
+export default {
   transactionData, 
   cardData, 
   categoryData,
@@ -141,5 +142,6 @@ export default {
   deleteCategory,
   selectCard, 
   getSelectedCard,
-  getCategoryByName
+  getCategoryByName,
+  getAllCategories,
 };

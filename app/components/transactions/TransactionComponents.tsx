@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   Modal,
@@ -12,9 +12,7 @@ import {
 import { Card, Transaction } from "../../data/sampleData";
 import { styles as transactionStyles } from "../../styles/transactionStyles";
 
-
 import SwipeableTransaction from "../SwipableTransaction";
-
 
 import {
   groupTransactionsByDate,
@@ -101,34 +99,101 @@ const CardsSection = ({
   </View>
 );
 
-// Search Bar Component
+// Modified Search Bar Component with Dropdown
 const SearchBar = ({ 
   searchQuery, 
   setSearchQuery, 
-  onScanPress 
+  onAddManually,
+  onScanFiles
 }: { 
   searchQuery: string, 
   setSearchQuery: (query: string) => void, 
-  onScanPress: () => void 
-}) => (
-  <View style={transactionStyles.searchContainer}>
-    <View style={transactionStyles.searchBar}>
-      <Ionicons name="search" size={20} color="#999" style={transactionStyles.searchIcon} />
-      <TextInput
-        style={transactionStyles.searchInput}
-        placeholder="Search"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-    </View>
-    <TouchableOpacity 
-      style={transactionStyles.addButton}
-      onPress={onScanPress}
-    >
-      <Text style={transactionStyles.addButtonText}>+ Add</Text>
-    </TouchableOpacity>
-  </View>
-);
+  onAddManually: () => void,
+  onScanFiles: () => void
+}) => {
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const dropdownOptions = [
+    {
+      id: 'manual',
+      title: 'Add Manually',
+      icon: 'add-circle-outline',
+      description: 'Enter transaction details manually',
+      onPress: () => {
+        setShowDropdown(false);
+        onAddManually();
+      }
+    },
+    {
+      id: 'scan',
+      title: 'Scan Files',
+      icon: 'camera-outline',
+      description: 'Scan receipt images with AI',
+      onPress: () => {
+        setShowDropdown(false);
+        onScanFiles();
+      }
+    }
+  ];
+
+  return (
+    <>
+      <View style={transactionStyles.searchContainer}>
+        <View style={transactionStyles.searchBar}>
+          <Ionicons name="search" size={20} color="#999" style={transactionStyles.searchIcon} />
+          <TextInput
+            style={transactionStyles.searchInput}
+            placeholder="Search"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity 
+          style={transactionStyles.addButton}
+          onPress={() => setShowDropdown(true)}
+        >
+          <Text style={transactionStyles.addButtonText}>+ Add</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Dropdown Modal */}
+      <Modal
+        visible={showDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDropdown(false)}
+      >
+        <TouchableOpacity 
+          style={transactionStyles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDropdown(false)}
+        >
+          <View style={transactionStyles.dropdownContent}>
+            {dropdownOptions.map((option, index) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  transactionStyles.dropdownOption,
+                  index === dropdownOptions.length - 1 && { borderBottomWidth: 0 }
+                ]}
+                onPress={option.onPress}
+              >
+                <View style={transactionStyles.dropdownOptionIcon}>
+                  <Ionicons name={option.icon as any} size={24} color="#3498db" />
+                </View>
+                <View style={transactionStyles.dropdownOptionContent}>
+                  <Text style={transactionStyles.dropdownOptionTitle}>{option.title}</Text>
+                  <Text style={transactionStyles.dropdownOptionDescription}>{option.description}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#999" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+};
 
 // Transactions List Component
 const TransactionsList = ({ 
