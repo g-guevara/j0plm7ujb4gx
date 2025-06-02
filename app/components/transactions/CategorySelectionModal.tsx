@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   FlatList,
@@ -17,13 +18,15 @@ interface CategorySelectionModalProps {
   transaction: Transaction | null;
   onClose: () => void;
   onSelectCategory: (category: string, transactionId: number) => void;
+  router?: Router; // Add router prop for navigation
 }
 
 const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
   visible,
   transaction,
   onClose,
-  onSelectCategory
+  onSelectCategory,
+  router
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -99,9 +102,12 @@ const CategorySelectionModal: React.FC<CategorySelectionModalProps> = ({
           <TouchableOpacity 
             style={styles.addCategoryButton}
             onPress={() => {
-              // Close this modal and optionally navigate to categories screen
+              // Close this modal first
               onClose();
-              // Note: You could add navigation to categories screen here if needed
+              // Navigate to categories screen if router is available
+              if (router) {
+                router.push("/screens/CategoriesScreen");
+              }
             }}
           >
             <Ionicons name="add-circle" size={20} color="white" style={styles.buttonIcon} />

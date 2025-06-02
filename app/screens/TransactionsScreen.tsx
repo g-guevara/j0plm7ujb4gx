@@ -384,7 +384,7 @@ export default function TransactionsScreen() {
           handleAddCard={handlers.handleAddCard}
         />
         
-        {/* Category Selection Modal */}
+        {/* Category Selection Modal - Updated to pass router */}
         <CategorySelectionModal
           visible={showCategoryModal}
           transaction={selectedTransaction}
@@ -393,6 +393,7 @@ export default function TransactionsScreen() {
             setSelectedTransaction(null);
           }}
           onSelectCategory={handleCategorySelect}
+          router={router}
         />
 
         {/* Add Transaction Modal */}

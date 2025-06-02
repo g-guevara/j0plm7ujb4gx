@@ -421,12 +421,13 @@ export default function DetailsScreen() {
         </View>
       )}
       
-      {/* Category Selection Modal */}
+      {/* Category Selection Modal - Updated to pass router */}
       <CategorySelectionModal
         visible={showCategoryModal}
         transaction={transaction}
         onClose={() => setShowCategoryModal(false)}
         onSelectCategory={handleCategorySelect}
+        router={router}
       />
     </View>
   );
