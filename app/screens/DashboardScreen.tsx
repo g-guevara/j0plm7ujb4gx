@@ -1,15 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Image, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import BudgetBarChart from "../components/dashboard/BudgetBarChart";
 import CardFilterDropdown from "../components/dashboard/CardFilterDropdown";
 import { DonutChart } from "../components/dashboard/DonutChart";
-import { getCategoryIcon, SEGMENTS } from "../components/dashboard/DonutUtils";
+import { SEGMENTS } from "../components/dashboard/DonutUtils";
 import ExpenseHistoryChart from "../components/dashboard/ExpenseHistoryChart";
 import { Transaction, transactionData } from "../data/sampleData";
+import { getAllCategories } from "../services/storage";
 import { styles } from "../styles/DashboardScreenStyles";
 
 export default function DashboardScreen() {
@@ -33,18 +34,29 @@ export default function DashboardScreen() {
     icon: string;
     color: string;
   }[]>([]);
-  
-  // Category colors
-  const categoryColors = [
-    "#f39c12", // Orange
-    "#3498db", // Blue
-    "#e74c3c", // Red
-    "#9b59b6", // Purple
-    "#2ecc71", // Green
-    "#1abc9c", // Teal
-    "#e67e22", // Dark Orange
-    "#f1c40f"  // Yellow
-  ];
+
+  // Get user categories from storage (memoized to prevent infinite loop)
+  const userCategories = useMemo(() => getAllCategories(), []);
+
+  // Helper function to get category data by name
+  const getCategoryData = useMemo(() => (categoryName: string) => {
+    const userCategory = userCategories.find(
+      cat => cat.name.toLowerCase() === categoryName.toLowerCase()
+    );
+    
+    if (userCategory) {
+      return {
+        color: userCategory.color,
+        icon: userCategory.icon
+      };
+    }
+    
+    // Fallback for categories not found in user storage
+    return {
+      color: "#007aff", // Default blue
+      icon: "cube-outline" // Default icon
+    };
+  }, [userCategories]);
 
   // Filter transactions based on selected time period and card
   const filteredTransactions = useMemo(() => {
@@ -96,52 +108,19 @@ export default function DashboardScreen() {
     return filtered;
   }, [selectedSegment, currentPeriod, selectedCardId, transactionData]);
 
-  // Process transaction data when filtered transactions change
-  useEffect(() => {
-    if (filteredTransactions.length > 0) {
-      // Calculate total amount
-      const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.mount, 0);
-      setTotalSpent(total);
-
-      // Process category data for DonutChart
-      processCategoryData(filteredTransactions);
-      
-      // Process historical data for ExpenseHistoryChart
-      processHistoricalData(filteredTransactions);
-      
-      // Process budget data for BudgetBarChart
-      processBudgetData(filteredTransactions);
-    } else {
-      // Reset charts if no data
-      setTotalSpent(0);
-      setTotalExpense(0);
-      setTotalIncome(0);
-      setCategories([]);
-      setExpenseHistory([]);
-      setIncomeHistory([]);
-      setBudgetCategories([]);
-    }
-  }, [filteredTransactions]);
-
-  // Reprocess data when segment or period changes
-  useEffect(() => {
-    if (filteredTransactions.length > 0) {
-      // Process historical data for ExpenseHistoryChart based on selected segment
-      processHistoricalData(filteredTransactions);
-    }
-  }, [selectedSegment, currentPeriod]);
-
   // Group transactions by category for DonutChart
-  const processCategoryData = (transactions: Transaction[]) => {
+  const processCategoryData = useCallback((transactions: Transaction[]) => {
     const categoryMap = new Map<string, {amount: number, color: string}>();
     
     // Group transactions by category and sum amounts
     transactions.forEach(transaction => {
       if (!categoryMap.has(transaction.category)) {
-        const colorIndex = categoryMap.size % categoryColors.length;
+        // Get real category data from user storage
+        const categoryData = getCategoryData(transaction.category);
+        
         categoryMap.set(transaction.category, {
           amount: 0,
-          color: categoryColors[colorIndex]
+          color: categoryData.color
         });
       }
       
@@ -161,10 +140,10 @@ export default function DashboardScreen() {
     categoryArray.sort((a, b) => b.amount - a.amount);
     
     setCategories(categoryArray);
-  };
+  }, [getCategoryData]);
 
   // Process transactions into time series data for ExpenseHistoryChart
-  const processHistoricalData = (transactions: Transaction[]) => {
+  const processHistoricalData = useCallback((transactions: Transaction[]) => {
     // Sort transactions by date
     const sortedTransactions = [...transactions].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -441,10 +420,10 @@ export default function DashboardScreen() {
     setIncomeHistory(incomeData);
     setTotalExpense(totalExpenseAmount);
     setTotalIncome(totalIncomeAmount);
-  };
+  }, [selectedSegment, currentPeriod]);
 
   // Process budget data for BudgetBarChart
-  const processBudgetData = (transactions: Transaction[]) => {
+  const processBudgetData = useCallback((transactions: Transaction[]) => {
     const categorySpending = new Map<string, number>();
     
     // Sum spending by category
@@ -453,22 +432,18 @@ export default function DashboardScreen() {
       categorySpending.set(transaction.category, current + transaction.mount);
     });
     
-    // Create budget categories array
+    // Create budget categories array using real category data
     const budgetCats = Array.from(categorySpending.entries())
-      .map(([name, spent], index) => {
-        // Get appropriate icon for the category
-        const iconName = getCategoryIcon(name);
-        // Get default budget value (the BudgetBarChart component will handle actual budget values)
-        const budget = 100000; // default value, will be overridden by the component
-        // Get color from the category colors array
-        const colorIndex = index % categoryColors.length;
+      .map(([name, spent]) => {
+        // Get real category data from user storage
+        const categoryData = getCategoryData(name);
         
         return {
           name,
           spent,
-          budget,
-          icon: iconName,
-          color: categoryColors[colorIndex]
+          budget: 100000, // default value, will be overridden by the component
+          icon: categoryData.icon,
+          color: categoryData.color
         };
       })
       // Sort by highest spending first
@@ -477,7 +452,34 @@ export default function DashboardScreen() {
       .slice(0, 3);
     
     setBudgetCategories(budgetCats);
-  };
+  }, [getCategoryData]);
+
+  // Process transaction data when filtered transactions change
+  useEffect(() => {
+    if (filteredTransactions.length > 0) {
+      // Calculate total amount
+      const total = filteredTransactions.reduce((sum, transaction) => sum + transaction.mount, 0);
+      setTotalSpent(total);
+
+      // Process category data for DonutChart
+      processCategoryData(filteredTransactions);
+      
+      // Process historical data for ExpenseHistoryChart
+      processHistoricalData(filteredTransactions);
+      
+      // Process budget data for BudgetBarChart
+      processBudgetData(filteredTransactions);
+    } else {
+      // Reset charts if no data
+      setTotalSpent(0);
+      setTotalExpense(0);
+      setTotalIncome(0);
+      setCategories([]);
+      setExpenseHistory([]);
+      setIncomeHistory([]);
+      setBudgetCategories([]);
+    }
+  }, [filteredTransactions, processCategoryData, processHistoricalData, processBudgetData]);
 
   // Format display of current period based on selected segment
   const getPeriodDisplay = (): string => {
